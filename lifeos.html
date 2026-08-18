@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LifeOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,450;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f1ede2; --bg-panel:#fbfaf6; --bg-raised:#f1ebdd; --bg-hover:#e8e0cd;
+    --border:#ddd3ba; --border-soft:#e7dfca;
+    --text:#2c2620; --text-dim:#6b6152; --text-faint:#9c9280;
+    --brass:#a8781e; --brass-bright:#c99a35; --brass-soft:rgba(168,120,30,0.13);
+    --teal:#2f8a79; --teal-soft:rgba(47,138,121,0.13);
+    --coral:#c25c40; --coral-soft:rgba(194,92,64,0.13);
+    --violet:#6c5fa8; --violet-soft:rgba(108,95,168,0.13);
+    --grey-soft:rgba(107,97,82,0.10);
+    --radius:11px;
+    --shadow-card:0 1px 0 rgba(255,255,255,0.6) inset, 0 8px 22px -12px rgba(44,38,32,0.16);
+    --shadow-pop:0 20px 50px -15px rgba(44,38,32,0.28);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse 1200px 600px at 15% -10%, rgba(168,120,30,0.07), transparent 60%),
+      radial-gradient(ellipse 900px 500px at 100% 0%, rgba(47,138,121,0.06), transparent 55%),
+      var(--bg);
+    color:var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+    min-height:100vh; overflow-x:hidden;
+  }
+  ::selection{ background:var(--brass-soft); color:var(--brass); }
+  .serif{ font-family:'Fraunces', serif; } .mono{ font-family:'IBM Plex Mono', monospace; }
+  a{ color:inherit; } button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+  input,textarea,select{ font-family:inherit; color:inherit; background:none; border:none; outline:none; }
+  ::-webkit-scrollbar{ width:9px; height:9px; } ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; } ::-webkit-scrollbar-track{ background:transparent; }
+
+  #app{ display:flex; min-height:100vh; }
+  .sidebar{ width:224px; flex-shrink:0; background:rgba(255,255,255,0.5); border-right:1px solid var(--border-soft);
+    display:flex; flex-direction:column; padding:22px 14px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  .brand{ display:flex; align-items:baseline; gap:8px; padding:4px 10px 4px 10px; }
+  .brand-mark{ width:9px; height:9px; border-radius:2px; background:var(--brass); box-shadow:0 0 10px 2px rgba(207,159,46,0.5); flex-shrink:0; margin-bottom:3px; }
+  .brand-name{ font-family:'Fraunces', serif; font-weight:500; font-size:19px; letter-spacing:0.2px; }
+  .brand-sub{ font-size:10px; color:var(--text-faint); letter-spacing:1.5px; text-transform:uppercase; padding:0 10px 20px; }
+  .nav{ display:flex; flex-direction:column; gap:2px; }
+  .nav-item{ display:flex; align-items:center; gap:10px; padding:8px 11px; border-radius:8px; font-size:13.2px; color:var(--text-dim); text-align:left; transition:background .15s, color .15s; position:relative; }
+  .nav-item:hover{ background:var(--bg-hover); color:var(--text); }
+  .nav-item.active{ background:var(--bg-raised); color:var(--text); }
+  .nav-item.active::before{ content:''; position:absolute; left:-14px; top:50%; transform:translateY(-50%); width:3px; height:16px; border-radius:3px; background:var(--brass); }
+  .nav-icon{ width:15px; height:15px; flex-shrink:0; opacity:.9; }
+  .nav-badge{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--coral); background:var(--coral-soft); padding:1px 6px; border-radius:20px; }
+  .nav-spacer{ flex:1; }
+  .nav-foot{ display:flex; flex-direction:column; gap:2px; border-top:1px solid var(--border-soft); padding-top:10px; margin-top:10px; }
+
+  .main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .topbar{ padding:22px 40px 0 40px; display:flex; flex-direction:column; gap:16px; }
+  .capture-row{ display:flex; gap:10px; align-items:center; }
+  .capture-box{ flex:1; background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; padding:13px 16px; display:flex; align-items:center; gap:10px; transition:border-color .15s, box-shadow .15s; }
+  .capture-box:focus-within{ border-color:rgba(207,159,46,0.45); box-shadow:0 0 0 3px rgba(207,159,46,0.08); }
+  .capture-box input{ flex:1; font-size:14.5px; color:var(--text); }
+  .capture-box input::placeholder{ color:var(--text-faint); }
+  .capture-icon{ color:var(--text-faint); flex-shrink:0; }
+  .btn{ display:inline-flex; align-items:center; gap:6px; padding:9px 15px; border-radius:9px; font-size:13px; font-weight:500; transition:background .15s, transform .1s, border-color .15s; white-space:nowrap; }
+  .btn:active{ transform:scale(0.97); }
+  .btn-brass{ background:var(--brass); color:#1a1305; } .btn-brass:hover{ background:var(--brass-bright); }
+  .btn-ghost{ background:var(--bg-panel); border:1px solid var(--border); color:var(--text-dim); } .btn-ghost:hover{ color:var(--text); border-color:#3a4256; }
+  .btn-sm{ padding:6px 11px; font-size:12px; border-radius:7px; }
+  .btn-icon{ width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; background:var(--bg-panel); border:1px solid var(--border); color:var(--text-dim); flex-shrink:0; position:relative; }
+  .btn-icon:hover{ color:var(--text); border-color:#3a4256; }
+  .btn-icon.rec{ color:var(--coral); border-color:rgba(221,122,99,0.4); background:var(--coral-soft); }
+  .bell-badge{ position:absolute; top:-4px; right:-4px; background:var(--coral); color:#1a0e0b; font-family:'IBM Plex Mono',monospace; font-size:9px; min-width:15px; height:15px; border-radius:20px; display:flex; align-items:center; justify-content:center; padding:0 3px; }
+
+  .content{ padding:26px 40px 80px 40px; }
+  .page-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+  .page-title{ font-family:'Fraunces', serif; font-size:26px; font-weight:450; }
+  .page-eyebrow{ font-size:10.5px; letter-spacing:1.6px; text-transform:uppercase; color:var(--text-faint); margin-bottom:4px; }
+
+  .card{ background:var(--bg-panel); border:1px solid var(--border-soft); border-radius:var(--radius); box-shadow:var(--shadow-card); }
+  .card-pad{ padding:18px 20px; }
+  .section-label{ font-size:11px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-faint); display:flex; align-items:center; gap:8px; margin:30px 0 12px 0; }
+  .section-label:first-child{ margin-top:0; }
+  .section-label .count{ font-family:'IBM Plex Mono',monospace; color:var(--text-dim); font-size:10.5px; }
+
+  .briefing-card{ display:flex; align-items:center; gap:14px; padding:16px 20px; margin-bottom:18px; }
+  .briefing-kicker{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--brass); font-weight:600; flex-shrink:0; writing-mode:horizontal-tb; }
+  .briefing-line{ font-style:italic; font-size:15px; color:var(--text); line-height:1.5; }
+
+  .priority-hero{ background: linear-gradient(135deg, rgba(207,159,46,0.09), rgba(207,159,46,0.02) 60%), var(--bg-panel); border:1px solid var(--border-soft); border-left:3px solid var(--brass); border-radius:var(--radius); padding:22px 24px; position:relative; overflow:hidden; }
+  .priority-hero::after{ content:''; position:absolute; right:-60px; top:-60px; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle, rgba(207,159,46,0.12), transparent 70%); }
+  .priority-kicker{ font-size:10.5px; letter-spacing:1.6px; text-transform:uppercase; color:var(--brass); font-weight:600; margin-bottom:8px; }
+  .priority-title{ font-family:'Fraunces', serif; font-size:22px; font-weight:500; line-height:1.25; margin-bottom:10px; max-width:640px; }
+  .priority-meta{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .margin-note{ font-family:'Fraunces', serif; font-style:italic; font-size:14.5px; line-height:1.55; color:var(--text-dim); border-left:2px solid var(--border); padding-left:14px; max-width:600px; }
+  .margin-note b{ color:var(--text); font-weight:500; font-style:normal; }
+  .priority-actions{ display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }
+
+  .pill{ display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:3px 9px; border-radius:20px; font-weight:500; border:1px solid transparent; white-space:nowrap; }
+  .pill-high{ background:var(--coral-soft); color:var(--coral); } .pill-medium{ background:var(--brass-soft); color:var(--brass-bright); } .pill-low{ background:var(--grey-soft); color:var(--text-dim); }
+  .pill-proj{ background:var(--teal-soft); color:var(--teal); } .pill-status{ background:var(--bg-raised); color:var(--text-dim); border-color:var(--border); }
+  .pill-overdue{ background:var(--coral-soft); color:var(--coral); } .pill-idea{ background:var(--violet-soft); color:var(--violet); }
+  .pill-commit{ background:var(--brass-soft); color:var(--brass-bright); }
+  .pill-health-healthy{ background:var(--teal-soft); color:var(--teal); } .pill-health-needs{ background:var(--brass-soft); color:var(--brass-bright); }
+  .pill-health-risk{ background:var(--coral-soft); color:var(--coral); } .pill-health-stalled{ background:var(--grey-soft); color:var(--text-dim); }
+  .dot{ width:6px; height:6px; border-radius:50%; }
+
+  .grid-2col{ display:grid; grid-template-columns:1.35fr 1fr; gap:20px; align-items:start; }
+  .stack{ display:flex; flex-direction:column; gap:10px; }
+  .proj-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:12px; }
+  .idea-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:12px; }
+  .stat-row{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .stat-box{ background:var(--bg-raised); border:1px solid var(--border-soft); border-radius:9px; padding:12px 14px; }
+  .stat-num{ font-family:'IBM Plex Mono',monospace; font-size:21px; color:var(--text); }
+  .stat-label{ font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.8px; margin-top:2px; }
+
+  .task-row{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:9px; border:1px solid var(--border-soft); background:var(--bg-panel); transition:border-color .15s, background .15s; }
+  .task-row:hover{ border-color:var(--border); background:var(--bg-raised); }
+  .checkbox{ width:18px; height:18px; border-radius:5px; border:1.5px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+  .checkbox:hover{ border-color:var(--teal); } .checkbox.checked{ background:var(--teal); border-color:var(--teal); }
+  .task-body{ flex:1; min-width:0; } .task-title{ font-size:14px; font-weight:500; margin-bottom:4px; } .task-title.done{ text-decoration:line-through; color:var(--text-faint); }
+  .task-meta{ display:flex; gap:7px; align-items:center; flex-wrap:wrap; font-size:11px; color:var(--text-faint); }
+  .task-actions{ display:flex; gap:4px; opacity:0; transition:opacity .15s; flex-shrink:0; }
+  .task-row:hover .task-actions{ opacity:1; }
+
+  .proj-card{ padding:16px 17px; display:flex; flex-direction:column; gap:10px; cursor:pointer; transition:transform .12s, border-color .15s; }
+  .proj-card:hover{ border-color:#3a4256; transform:translateY(-1px); }
+  .proj-name{ font-family:'Fraunces',serif; font-size:16.5px; font-weight:500; }
+  .proj-desc{ font-size:12.5px; color:var(--text-dim); line-height:1.5; min-height:18px; }
+  .progress-track{ height:5px; border-radius:6px; background:var(--bg-raised); overflow:hidden; }
+  .progress-fill{ height:100%; background:linear-gradient(90deg, var(--teal), var(--brass)); border-radius:6px; }
+  .proj-foot{ display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-faint); }
+
+  .idea-card{ padding:15px 16px; position:relative; overflow:hidden; cursor:default; background:linear-gradient(160deg, rgba(143,131,201,0.06), transparent 55%), var(--bg-panel); }
+  .idea-card::before{ content:''; position:absolute; top:0; right:0; width:0; height:0; border-style:solid; border-width:0 22px 22px 0; border-color:transparent var(--bg) transparent transparent; }
+  .idea-title{ font-family:'Fraunces',serif; font-style:italic; font-size:15px; line-height:1.4; margin-bottom:8px; padding-right:10px; }
+  .idea-meta{ font-size:11px; color:var(--text-faint); }
+
+  .attn-item{ display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--border-soft); }
+  .attn-item:last-child{ border-bottom:none; }
+  .attn-dot{ width:6px; height:6px; border-radius:50%; margin-top:6px; flex-shrink:0; background:var(--coral); }
+  .attn-text{ font-size:13px; line-height:1.5; } .attn-text b{ font-weight:600; }
+  .attn-sub{ font-size:11.5px; color:var(--text-faint); margin-top:2px; }
+
+  .chat-panel{ display:flex; flex-direction:column; height:100%; }
+  .chat-log{ flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding:2px 2px 8px 2px; max-height:340px; }
+  .chat-msg{ font-size:13px; line-height:1.55; max-width:100%; }
+  .chat-msg.user{ color:var(--text-dim); } .chat-msg.user b{ color:var(--text); font-weight:600; }
+  .chat-msg.ai{ font-family:'Fraunces',serif; font-style:italic; color:var(--text); border-left:2px solid var(--brass-soft); padding-left:12px; }
+  .chat-msg.tool{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--teal); border-left:2px solid var(--teal-soft); padding-left:12px; font-style:normal; }
+  .chat-input-row{ display:flex; gap:8px; margin-top:12px; border-top:1px solid var(--border-soft); padding-top:12px; }
+  .chat-input{ flex:1; background:var(--bg-raised); border:1px solid var(--border); border-radius:8px; padding:9px 12px; font-size:13px; }
+  .chat-input:focus{ border-color:rgba(207,159,46,0.4); }
+  .chat-hint{ font-size:11.5px; color:var(--text-faint); line-height:1.6; }
+  .confirm-card{ border-radius:9px; padding:12px 14px; margin-top:4px; border:1px solid; }
+  .confirm-medium{ background:var(--brass-soft); border-color:rgba(207,159,46,0.35); }
+  .confirm-high{ background:var(--coral-soft); border-color:rgba(221,122,99,0.4); }
+  .confirm-kicker{ font-size:10.5px; letter-spacing:0.8px; text-transform:uppercase; font-weight:600; margin-bottom:7px; }
+  .confirm-medium .confirm-kicker{ color:var(--brass-bright); } .confirm-high .confirm-kicker{ color:var(--coral); }
+  .confirm-list{ list-style:none; display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
+  .confirm-list li{ font-size:12.5px; color:var(--text); padding-left:12px; position:relative; }
+  .confirm-list li::before{ content:'—'; position:absolute; left:0; color:var(--text-faint); }
+  .confirm-actions{ display:flex; gap:8px; }
+
+  .empty{ text-align:center; padding:50px 20px; color:var(--text-faint); }
+  .empty .serif{ font-size:16px; color:var(--text-dim); margin-bottom:6px; display:block; }
+  .empty-icon{ opacity:.5; margin-bottom:10px; }
+
+  .loader{ display:inline-block; width:14px; height:14px; border-radius:50%; border:2px solid var(--border); border-top-color:var(--brass); animation:spin .7s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .fade-in{ animation:fadeIn .35s ease; } @keyframes fadeIn{ from{ opacity:0; transform:translateY(4px);} to{ opacity:1; transform:translateY(0);} }
+
+  .modal-overlay{ position:fixed; inset:0; background:rgba(44,38,32,0.38); backdrop-filter:blur(3px); display:flex; align-items:flex-start; justify-content:center; z-index:100; padding:6vh 20px; overflow-y:auto; }
+  .modal{ background:var(--bg-panel); border:1px solid var(--border); border-radius:14px; width:100%; max-width:560px; box-shadow:var(--shadow-pop); animation:popIn .18s ease; }
+  @keyframes popIn{ from{ opacity:0; transform:translateY(8px) scale(.98);} to{ opacity:1; transform:translateY(0) scale(1);} }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--border-soft); }
+  .modal-title{ font-family:'Fraunces',serif; font-size:18px; font-weight:500; }
+  .modal-body{ padding:20px 22px; display:flex; flex-direction:column; gap:14px; max-height:64vh; overflow-y:auto; }
+  .modal-foot{ padding:16px 22px; border-top:1px solid var(--border-soft); display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+  .field-label{ font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--text-faint); margin-bottom:6px; display:block; }
+  .field-input{ width:100%; background:var(--bg-raised); border:1px solid var(--border); border-radius:8px; padding:9px 12px; font-size:13.5px; }
+  .field-input:focus{ border-color:rgba(207,159,46,0.4); }
+  textarea.field-input{ resize:vertical; min-height:60px; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .close-x{ width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; color:var(--text-faint); }
+  .close-x:hover{ background:var(--bg-hover); color:var(--text); }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-dim); }
+  .tiny{ font-size:11px; color:var(--text-faint); }
+
+  .toast-wrap{ position:fixed; bottom:22px; right:22px; display:flex; flex-direction:column; gap:8px; z-index:200; }
+  .toast{ background:var(--bg-raised); border:1px solid var(--border); padding:10px 16px; border-radius:9px; font-size:13px; box-shadow:var(--shadow-pop); animation:popIn .2s ease; display:flex; align-items:center; gap:8px; max-width:320px; }
+  .toast-action-btn{ margin-left:4px; padding:4px 10px; border-radius:6px; background:var(--brass); color:#1a1305; font-size:11px; font-weight:600; white-space:nowrap; }
+
+  .search-box{ display:flex; align-items:center; gap:10px; background:var(--bg-panel); border:1px solid var(--border); border-radius:11px; padding:12px 16px; margin-bottom:22px; }
+  .search-box input{ flex:1; font-size:14px; }
+  select.field-input{ appearance:none; }
+
+  .activity-line{ display:flex; gap:8px; font-size:11.5px; color:var(--text-faint); padding:5px 0; border-bottom:1px solid var(--border-soft); }
+  .activity-line:last-child{ border-bottom:none; }
+  .memory-card{ padding:14px 16px; }
+
+  @media (max-width: 900px){
+    .grid-2col{ grid-template-columns:1fr; } .sidebar{ display:none; } .content, .topbar{ padding-left:18px; padding-right:18px; } .stat-row{ grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* =========================================================================
+   LifeOS V3 — Personal AI Chief of Staff
+   Same entity architecture + memory + AI tool-calling actions + reminders +
+   activity log + milestones + open loops as before — now persisted to the
+   same Supabase database the Android/Desktop apps use (real accounts, real
+   cross-device sync), with AI calls routed through the same Gemini-calling
+   Edge Function, instead of window.storage + direct-to-Anthropic (both of
+   which only work inside claude.ai's own sandbox).
+   ========================================================================= */
+
+const ICONS = {
+  dashboard:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
+  tasks:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>',
+  projects:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l2-3h5l2 3h9v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>',
+  goals:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>',
+  ideas:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.85 1 .95 1.7h5.3c.1-.7.45-1.3.95-1.7A6 6 0 0 0 12 3z"/></svg>',
+  followups:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  reminders:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+  decisions:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="19" cy="17" r="2.4"/></svg>',
+  memory:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9.5 2A5.5 5.5 0 0 0 4 7.5c0 1 .3 2 .8 2.7A4 4 0 0 0 4 13.5 4 4 0 0 0 8 17.5v1a3 3 0 0 0 6 0v-9A5.5 5.5 0 0 0 9.5 2z"/></svg>',
+  search:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+  settings:'<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>',
+  mic:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg>',
+  send:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></path></svg>',
+  sparkle:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/></svg>',
+  plus:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+  x:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  bell:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+  check:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0d1410" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>',
+  clock:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+};
+
+const TYPE_META = {
+  TASK:{label:'Task', color:'var(--teal)'}, IDEA:{label:'Idea', color:'var(--violet)'},
+  THOUGHT:{label:'Thought', color:'var(--text-dim)'}, NOTE:{label:'Note', color:'var(--text-dim)'},
+  REMINDER:{label:'Reminder', color:'var(--brass)'}, FOLLOWUP:{label:'Follow-up', color:'var(--brass)'},
+  DECISION:{label:'Decision', color:'var(--coral)'}, MEMORY:{label:'Memory', color:'var(--violet)'},
+};
+const HEALTH_META = {
+  healthy:{label:'Healthy', cls:'pill-health-healthy', desc:'On track — no overdue tasks, deadline not passed, touched within the last 5 days.'},
+  needs_attention:{label:'Needs attention', cls:'pill-health-needs', desc:"Idle for 5+ days, or a task on it has been postponed twice or more."},
+  at_risk:{label:'At risk', cls:'pill-health-risk', desc:'Has an overdue task, or its deadline has passed.'},
+  stalled:{label:'Stalled', cls:'pill-health-stalled', desc:"No activity in over 10 days, or the project isn't marked active."},
+};
+
+let STATE = null;
+let SAVE_TIMER = null;
+let REMINDER_TIMER = null;
+const STORAGE_KEY = 'lifeos_state_v2';
+
+/* ---------------------------- Supabase client (replaces window.storage) ----------------------------
+   window.storage only exists inside claude.ai's artifact sandbox — hosted anywhere else (GitHub Pages,
+   your own domain), it doesn't exist at all. This is the same Postgres database + Auth the Android/
+   Desktop apps use, via plain fetch() calls to Supabase's REST API — no SDK/CDN dependency. */
+let CONFIG = null;   // {supabaseUrl, anonKey, backendUrl} — one-time setup, stored in this browser's localStorage
+let SESSION = null;  // {access_token, refresh_token, user} — current signed-in session
+
+function loadConfig(){ try{ const raw = localStorage.getItem('lifeos_config'); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+function saveConfigLocal(cfg){ localStorage.setItem('lifeos_config', JSON.stringify(cfg)); CONFIG = cfg; }
+
+async function sbFetch(path, opts={}){
+  if(!CONFIG || !CONFIG.supabaseUrl) throw new Error('Not configured');
+  const headers = Object.assign({ 'apikey': CONFIG.anonKey, 'Content-Type':'application/json' }, opts.headers||{});
+  headers['Authorization'] = 'Bearer ' + ((SESSION && SESSION.access_token) || CONFIG.anonKey);
+  const res = await fetch(CONFIG.supabaseUrl.replace(/\/$/,'') + path, Object.assign({}, opts, {headers}));
+  if(!res.ok){ const t = await res.text().catch(()=>''); throw new Error(`${res.status}: ${t}`); }
+  if(res.status===204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// Every entity in this app uses camelCase (projectId, dueDate, createdAt…) —
+// Postgres uses snake_case (project_id, due_date, created_at…). Converting at
+// this one boundary means the rest of the file — every render function, every
+// event handler — never needed to change at all.
+function toSnakeKey(k){ return k.replace(/[A-Z]/g, m => '_'+m.toLowerCase()); }
+function toCamelKey(k){ return k.replace(/_([a-z0-9])/g, (_,c)=>c.toUpperCase()); }
+function toSnakeRow(obj){ const out={}; for(const k in obj) out[toSnakeKey(k)] = obj[k]; return out; }
+function toCamelRow(row){ const out={}; for(const k in row) out[toCamelKey(k)] = row[k]; return out; }
+
+// activityLog and notifications stay client-only/ephemeral, same as before — not synced.
+const SYNC_COLLECTIONS = new Set(['projects','goals','milestones','tasks','ideas','thoughts','notes','decisions','followups','reminders','memories']);
+async function syncCreate(collection, entity){
+  if(!SYNC_COLLECTIONS.has(collection)) return;
+  try{ await sbFetch(`/rest/v1/${collection}`, { method:'POST', headers:{'Prefer':'return=minimal'}, body: JSON.stringify(toSnakeRow(entity)) }); }
+  catch(e){ console.error('sync create failed', collection, e); toast('Could not save to the cloud — check your connection'); }
+}
+async function syncUpdate(collection, id, patch){
+  if(!SYNC_COLLECTIONS.has(collection)) return;
+  try{ await sbFetch(`/rest/v1/${collection}?id=eq.${id}`, { method:'PATCH', headers:{'Prefer':'return=minimal'}, body: JSON.stringify(toSnakeRow(patch)) }); }
+  catch(e){ console.error('sync update failed', collection, e); toast('Could not save to the cloud — check your connection'); }
+}
+async function syncDelete(collection, id){
+  if(!SYNC_COLLECTIONS.has(collection)) return;
+  try{ await sbFetch(`/rest/v1/${collection}?id=eq.${id}`, { method:'DELETE' }); }
+  catch(e){ console.error('sync delete failed', collection, e); toast('Could not delete from the cloud — check your connection'); }
+}
+
+// ---- Auth ----
+function setSession(data){
+  SESSION = { access_token:data.access_token, refresh_token:data.refresh_token, user:data.user };
+  if(data.refresh_token) localStorage.setItem('lifeos_refresh_token', data.refresh_token);
+}
+async function trySignInWithStoredSession(){
+  const rt = localStorage.getItem('lifeos_refresh_token');
+  if(!rt) return false;
+  try{ const data = await sbFetch('/auth/v1/token?grant_type=refresh_token', { method:'POST', body: JSON.stringify({refresh_token:rt}) }); setSession(data); return true; }
+  catch(e){ localStorage.removeItem('lifeos_refresh_token'); return false; }
+}
+async function signUp(email, password){ const data = await sbFetch('/auth/v1/signup', { method:'POST', body: JSON.stringify({email,password}) }); if(data.access_token) setSession(data); return data; }
+async function signIn(email, password){ const data = await sbFetch('/auth/v1/token?grant_type=password', { method:'POST', body: JSON.stringify({email,password}) }); setSession(data); return data; }
+function signOutUser(){ SESSION=null; localStorage.removeItem('lifeos_refresh_token'); location.reload(); }
+
+/* ---------------------------- Utilities ---------------------------- */
+function uid(){ return crypto.randomUUID(); }
+function currentTz(){ return (STATE && STATE.timezone) || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; }
+/* Calendar date (YYYY-MM-DD) as it reads on a wall clock in the given IANA zone — not UTC. */
+function zonedYMD(date, tz){
+  try{
+    const fmt = new Intl.DateTimeFormat('en-CA', {timeZone:tz, year:'numeric',month:'2-digit',day:'2-digit'});
+    return fmt.format(date);
+  }catch(e){ return date.toISOString().slice(0,10); }
+}
+/* Offset (minutes) of an IANA zone from UTC at a given instant — no library required. */
+function tzOffsetMinutes(date, tz){
+  const fmt = new Intl.DateTimeFormat('en-US', {timeZone:tz, hour12:false, year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const parts = fmt.formatToParts(date).reduce((acc,p)=>{ acc[p.type]=p.value; return acc; },{});
+  const asUTC = Date.UTC(parts.year, parts.month-1, parts.day, parts.hour==='24'?0:parts.hour, parts.minute, parts.second);
+  return (asUTC - date.getTime())/60000;
+}
+/* Turn a wall-clock "YYYY-MM-DD" + "HH:MM" meant in `tz` into a true UTC ISO instant,
+   so a reminder set for 9am in your timezone still fires at 9am your time even if this
+   state is later opened from a device in a different timezone. */
+function zonedToUtcISO(dateStr, timeStr, tz){
+  const naiveUtc = new Date(`${dateStr}T${timeStr}:00Z`);
+  const offset = tzOffsetMinutes(naiveUtc, tz);
+  return new Date(naiveUtc.getTime() - offset*60000).toISOString();
+}
+function todayISO(){ return zonedYMD(new Date(), currentTz()); }
+function nowISO(){ return new Date().toISOString(); }
+function fmtDate(iso){
+  if(!iso) return null;
+  const d = new Date(iso+'T00:00:00'); if(isNaN(d)) return iso;
+  const today = new Date(todayISO()+'T00:00:00');
+  const diff = Math.round((d-today)/86400000);
+  if(diff===0) return 'Today'; if(diff===1) return 'Tomorrow'; if(diff===-1) return 'Yesterday';
+  if(diff<0) return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  if(diff>0 && diff<7) return d.toLocaleDateString('en-US',{weekday:'short'});
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function fmtDateTime(iso){
+  if(!iso) return null;
+  const d = new Date(iso);
+  const tz = currentTz();
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:tz}) + ' · ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:tz});
+}
+function daysUntil(iso){ if(!iso) return null; const d=new Date(iso+'T00:00:00'); const t=new Date(todayISO()+'T00:00:00'); return Math.round((d-t)/86400000); }
+function daysSince(iso){ if(!iso) return 0; return Math.floor((new Date()-new Date(iso))/86400000); }
+function greeting(){ const h=Number(new Intl.DateTimeFormat('en-US',{hour:'2-digit',hour12:false,timeZone:currentTz()}).format(new Date())); return h<12?'Good morning':h<18?'Good afternoon':'Good evening'; }
+function escapeHtml(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function toast(msg, action){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div'); el.className='toast';
+  const iconSpan = document.createElement('span'); iconSpan.style.color='var(--brass)'; iconSpan.innerHTML = ICONS.sparkle;
+  const textSpan = document.createElement('span'); textSpan.textContent = msg;
+  el.appendChild(iconSpan); el.appendChild(textSpan);
+  if(action){
+    const btn = document.createElement('button');
+    btn.textContent = action.label; btn.className = 'toast-action-btn';
+    btn.onclick = ()=>{ action.onClick(); el.remove(); };
+    el.appendChild(btn);
+  }
+  wrap.appendChild(el);
+  const timeout = action ? 10000 : 3400;
+  setTimeout(()=>{ if(document.body.contains(el)){ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); } }, timeout);
+}
+
+/* ---------------------------- Default state (entity model) ---------------------------- */
+function defaultState(){
+  return {
+    userName:'there',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    backendUrl: '',
+    view:'dashboard',
+    notifPermissionAsked:false,
+    goals:[], projects:[], milestones:[],
+    tasks:[], ideas:[], thoughts:[], notes:[], decisions:[], followups:[], reminders:[], memories:[],
+    activityLog:[], notifications:[], chat:[],
+    lastDailyLine:null, lastDailyDate:null,
+  };
+}
+
+/* ---------------------------- Persistence ---------------------------- */
+async function loadState(){
+  STATE = defaultState();
+  STATE.backendUrl = CONFIG.backendUrl;
+  try{
+    const collections = ['projects','goals','milestones','tasks','ideas','thoughts','notes','decisions','followups','reminders','memories'];
+    const results = await Promise.all(collections.map(c => sbFetch(`/rest/v1/${c}?select=*`).catch(()=>[])));
+    collections.forEach((c,i) => { STATE[c] = (results[i]||[]).map(toCamelRow); });
+    const settingsRows = await sbFetch('/rest/v1/user_settings?select=*').catch(()=>[]);
+    if(settingsRows && settingsRows[0]){
+      STATE.userName = settingsRows[0].user_name || 'there';
+      STATE.timezone = settingsRows[0].timezone || STATE.timezone;
+    }
+  }catch(e){ console.error('load failed', e); toast('Could not load your data — check your connection'); }
+}
+function scheduleSave(){ clearTimeout(SAVE_TIMER); SAVE_TIMER = setTimeout(saveState, 400); }
+async function saveState(){
+  // Entities save themselves the moment they change (see addEntity/updateEntity/
+  // deleteEntity) — this now only persists the small per-user settings row.
+  try{
+    if(SESSION && SESSION.user){
+      await sbFetch('/rest/v1/user_settings', {
+        method:'POST',
+        headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+        body: JSON.stringify({ user_id: SESSION.user.id, user_name: STATE.userName, timezone: STATE.timezone }),
+      });
+    }
+  }catch(e){ console.error('settings save failed', e); }
+  if(FILE_HANDLE) writeStateToFile();
+}
+
+/* ---------------------------- File sync (e.g. a file inside your OneDrive folder) ---------------------------- */
+let FILE_HANDLE = null;
+let FILE_HANDLE_NAME = null;
+async function connectSyncFile(){
+  if(!window.showSaveFilePicker){ toast("Your browser doesn't support live file sync — use Export/Import instead."); return; }
+  try{
+    const handle = await window.showSaveFilePicker({ suggestedName:'lifeos-data.json', types:[{description:'JSON File', accept:{'application/json':['.json']}}] });
+    FILE_HANDLE = handle; FILE_HANDLE_NAME = handle.name;
+    await writeStateToFile();
+    toast('Connected — now saving to '+handle.name);
+    render();
+  }catch(e){ if(e.name!=='AbortError') toast('Could not connect to a file'); }
+}
+async function writeStateToFile(){
+  if(!FILE_HANDLE) return;
+  try{
+    let perm = await FILE_HANDLE.queryPermission({mode:'readwrite'});
+    if(perm!=='granted'){ perm = await FILE_HANDLE.requestPermission({mode:'readwrite'}); if(perm!=='granted') return; }
+    const writable = await FILE_HANDLE.createWritable();
+    await writable.write(JSON.stringify(STATE, null, 2));
+    await writable.close();
+  }catch(e){ console.error('file sync failed', e); }
+}
+function disconnectSyncFile(){ FILE_HANDLE=null; FILE_HANDLE_NAME=null; toast('Disconnected'); render(); }
+async function importFromPicker(){
+  if(window.showOpenFilePicker){
+    try{
+      const [handle] = await window.showOpenFilePicker({types:[{description:'JSON File', accept:{'application/json':['.json']}}]});
+      const file = await handle.getFile(); const text = await file.text();
+      applyImportedJson(text);
+    }catch(e){ if(e.name!=='AbortError') toast('Import failed'); }
+  } else {
+    const input = document.getElementById('importFileInput'); if(input) input.click();
+  }
+}
+function handleImportFileInput(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=> applyImportedJson(reader.result);
+  reader.readAsText(file);
+}
+function applyImportedJson(text){
+  if(!confirm('Import this file? It will replace everything currently in LifeOS.')) return;
+  try{
+    const parsed = JSON.parse(text);
+    STATE = Object.assign(defaultState(), parsed);
+    scheduleSave(); toast('Imported'); render();
+  }catch(e){ toast('That file could not be read as LifeOS data'); }
+}
+
+/* ---------------------------- Generic entity CRUD + activity log ---------------------------- */
+const ENTITY_DEFAULTS = {
+  tasks:{status:'open', priority:'medium', postponeCount:0, projectId:null, milestoneId:null, dueDate:null, commitment:false, estimatedMinutes:null},
+  ideas:{status:'exploration', projectId:null},
+  thoughts:{projectId:null}, notes:{projectId:null},
+  decisions:{projectId:null},
+  followups:{status:'waiting', projectId:null, expectedDate:null, followupDate:null},
+  reminders:{status:'pending', recurrence:null, relatedId:null},
+  memories:{importance:'medium', confidence:'stated', category:'other', source:'user', lastUsed:null, lastConfirmed:null, projectId:null},
+  projects:{status:'active', priority:'medium', objective:'', description:'', deadline:null, goalId:null, risks:[]},
+  milestones:{status:'open', dueDate:null},
+  goals:{projectIds:[]},
+  notifications:{read:false},
+};
+function labelFor(e){ return e.title || e.content || e.name || ''; }
+function logActivity(entityType, entityId, action, prevValue, newValue, source){
+  STATE.activityLog.push({ id:uid(), ts:nowISO(), entityType, entityId, action, prevValue, newValue, source:source||'user' });
+  if(STATE.activityLog.length>600) STATE.activityLog = STATE.activityLog.slice(-600);
+}
+function addEntity(collection, fields, source){
+  const now = nowISO();
+  const entity = Object.assign({id:uid(), createdAt:now, updatedAt:now}, ENTITY_DEFAULTS[collection]||{}, fields);
+  STATE[collection].push(entity);
+  logActivity(singular(collection), entity.id, 'created', null, entity, source);
+  syncCreate(collection, entity);
+  return entity;
+}
+function updateEntity(collection, id, patch, source){
+  const arr = STATE[collection]; const e = arr.find(x=>x.id===id); if(!e) return null;
+  const prev = {}; Object.keys(patch).forEach(k=>prev[k]=e[k]);
+  Object.assign(e, patch, {updatedAt: nowISO()});
+  logActivity(singular(collection), id, 'updated', prev, patch, source);
+  syncUpdate(collection, id, patch);
+  return e;
+}
+function deleteEntity(collection, id, source){
+  const arr = STATE[collection]; const e = arr.find(x=>x.id===id);
+  STATE[collection] = arr.filter(x=>x.id!==id);
+  logActivity(singular(collection), id, 'deleted', e, null, source);
+  syncDelete(collection, id);
+}
+function singular(collection){
+  const map = {tasks:'task',ideas:'idea',thoughts:'thought',notes:'note',decisions:'decision',followups:'followup',reminders:'reminder',memories:'memory',projects:'project',milestones:'milestone',goals:'goal',notifications:'notification'};
+  return map[collection]||collection;
+}
+
+/* ---------------------------- Derived helpers ---------------------------- */
+function projectById(id){ return STATE.projects.find(p=>p.id===id); }
+function projectName(id){ const p=projectById(id); return p?p.name:null; }
+function openTasksAll(){ return STATE.tasks.filter(t=>t.status!=='completed' && t.status!=='cancelled'); }
+function overdueTasks(){ return openTasksAll().filter(t=>t.dueDate && daysUntil(t.dueDate)<0); }
+function todayTasks(){ return openTasksAll().filter(t=>t.dueDate && daysUntil(t.dueDate)===0); }
+function activeFollowups(){ return STATE.followups.filter(f=>f.status!=='done'); }
+function pendingReminders(){ return STATE.reminders.filter(r=>r.status==='pending'); }
+function openLoopsCount(){ return openTasksAll().length + activeFollowups().length + pendingReminders().length; }
+function openCommitments(){ return openTasksAll().filter(t=>t.commitment); }
+function projectHasGoal(projectId){ if(!projectId) return false; return STATE.goals.some(g=>(g.projectIds||[]).includes(projectId)); }
+
+function priorityScore(t){
+  let score = 0;
+  const pw = {high:3, medium:2, low:1}[t.priority||'medium'] || 2;
+  score += pw*10;
+  if(t.dueDate){
+    const d = daysUntil(t.dueDate);
+    if(d<0) score += 42 + Math.min(-d,10)*2;
+    else if(d===0) score += 36;
+    else score += Math.max(0, 22-d*2.5);
+  }
+  score += Math.min(t.postponeCount||0,6)*6;
+  const inactivity = daysSince(t.updatedAt||t.createdAt);
+  if(inactivity>3) score += Math.min(inactivity-3,12)*1.8;
+  if(t.commitment) score += 10;
+  if(projectHasGoal(t.projectId)) score += 8;
+  if(t.estimatedMinutes && t.estimatedMinutes>90) score -= 6;
+  return Math.round(score);
+}
+function rankedOpenTasks(){ return openTasksAll().slice().sort((a,b)=>priorityScore(b)-priorityScore(a)); }
+
+function lastActivityDate(projectId){
+  const p = projectById(projectId); if(!p) return new Date();
+  const related = [].concat(STATE.tasks, STATE.ideas, STATE.decisions, STATE.followups, STATE.milestones)
+    .filter(e=>e.projectId===projectId);
+  let max = new Date(p.updatedAt||p.createdAt).getTime();
+  related.forEach(e=>{ const t = new Date(e.updatedAt||e.createdAt).getTime(); if(t>max) max=t; });
+  return new Date(max);
+}
+function projectHealthKey(p){
+  const open = STATE.tasks.filter(t=>t.projectId===p.id && t.status!=='completed' && t.status!=='cancelled');
+  const overdue = open.filter(t=>t.dueDate && daysUntil(t.dueDate)<0);
+  const idle = daysSince(lastActivityDate(p.id).toISOString());
+  const highPostpone = open.filter(t=>(t.postponeCount||0)>=2).length;
+  const deadlinePassed = p.deadline && daysUntil(p.deadline)<0;
+  if(p.status!=='active') return 'stalled';
+  if(idle>10 && open.length>0) return 'stalled';
+  if(overdue.length>0 || deadlinePassed) return 'at_risk';
+  if(idle>5 || highPostpone>0) return 'needs_attention';
+  return 'healthy';
+}
+/* Project Pulse: the same signals that decide the health badge, spelled out as a
+   plain-language reason — "3 overdue commitments · 8 days since progress · 2 tasks
+   postponed twice" — instead of leaving the user to guess what "At risk" means. */
+function projectPulse(p){
+  const open = STATE.tasks.filter(t=>t.projectId===p.id && t.status!=='completed' && t.status!=='cancelled');
+  const overdue = open.filter(t=>t.dueDate && daysUntil(t.dueDate)<0);
+  const idle = daysSince(lastActivityDate(p.id).toISOString());
+  const highPostpone = open.filter(t=>(t.postponeCount||0)>=2).length;
+  const deadlinePassed = p.deadline && daysUntil(p.deadline)<0;
+  const parts = [];
+  if(overdue.length) parts.push(`${overdue.length} overdue commitment${overdue.length===1?'':'s'}`);
+  if(deadlinePassed) parts.push('deadline has passed');
+  if(idle>=3) parts.push(`${idle} days since progress`);
+  if(highPostpone) parts.push(`${highPostpone} task${highPostpone===1?'':'s'} postponed twice+`);
+  if(p.status!=='active') parts.push(`marked ${p.status}`);
+  return parts.length? parts.join(' · ') : 'On track, nothing overdue.';
+}
+function projectMilestones(p){ return STATE.milestones.filter(m=>m.projectId===p.id); }
+function projectProgress(p){
+  const ms = projectMilestones(p);
+  if(ms.length){ const done = ms.filter(m=>m.status==='done').length; return Math.round((done/ms.length)*100); }
+  const ts = STATE.tasks.filter(t=>t.projectId===p.id);
+  if(ts.length===0) return null;
+  const done = ts.filter(t=>t.status==='completed').length;
+  return Math.round((done/ts.length)*100);
+}
+function neglectedProjects(){
+  return STATE.projects.filter(p=>p.status==='active' && (projectHealthKey(p)==='stalled' || projectHealthKey(p)==='needs_attention'));
+}
+
+/* ---------------------------- AI layer ---------------------------- */
+/* Kept the name "anthropicMessages" and its exact input/output shape on
+   purpose — this now talks to Gemini via the same Edge Function the Android/
+   Desktop apps use, but every caller below (classifyCapture, aiWhatNow,
+   aiAskAssistant, the TOOLS array, executeTool…) still speaks in Anthropic's
+   shape (messages as {role,content}, tools as {name,description,input_schema},
+   responses as {content:[{type:'text'|'tool_use',...}]}). All the translation
+   to/from Gemini's actual shape (contents/parts, functionCall/functionResponse,
+   `parameters` instead of `input_schema`) happens right here, in one place,
+   so nothing else in this ~1600-line file needed to change. */
+async function anthropicMessages({system, messages, tools, maxTokens}){
+  const backendUrl = STATE && STATE.backendUrl ? STATE.backendUrl.trim().replace(/\/$/,'') : '';
+  if(!backendUrl) throw new Error('No backend configured — set it up during first-run setup.');
+  if(!SESSION || !SESSION.access_token) throw new Error('Not signed in.');
+
+  const contents = [];
+  const toolCallNames = {}; // tool_use id -> name, resolved as we walk the conversation in order
+  for(const m of messages){
+    const role = m.role==='assistant' ? 'model' : 'user';
+    if(typeof m.content === 'string'){
+      contents.push({ role, parts:[{text:m.content}] });
+    } else if(Array.isArray(m.content)){
+      const parts = [];
+      for(const block of m.content){
+        if(block.type==='text') parts.push({text:block.text});
+        else if(block.type==='tool_use'){
+          toolCallNames[block.id] = block.name;
+          parts.push({functionCall:{name:block.name, args:block.input}});
+        } else if(block.type==='tool_result'){
+          let parsed; try{ parsed = JSON.parse(block.content); }catch(e){ parsed = {raw:block.content}; }
+          parts.push({functionResponse:{name: toolCallNames[block.tool_use_id] || 'tool', response: parsed}});
+        }
+      }
+      contents.push({ role, parts });
+    }
+  }
+
+  const body = { systemInstruction:{parts:[{text:system}]}, contents, generationConfig:{maxOutputTokens: maxTokens||800} };
+  if(tools) body.tools = [{ functionDeclarations: tools.map(t=>({ name:t.name, description:t.description, parameters:t.input_schema })) }];
+
+  const res = await fetch(backendUrl, {
+    method:'POST',
+    headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+SESSION.access_token},
+    body: JSON.stringify(body),
+  });
+  if(!res.ok) throw new Error('AI request failed: '+res.status);
+  const data = await res.json();
+
+  const geminiParts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+  const content = geminiParts.map(p=>{
+    if(p.functionCall) return { type:'tool_use', id:'call_'+uid(), name:p.functionCall.name, input:p.functionCall.args||{} };
+    return { type:'text', text: p.text||'' };
+  });
+  return { content };
+}
+async function callClaudeText(system, userMsg, opts={}){
+  const messages = (opts.history||[]).concat([{role:'user', content:userMsg}]);
+  const data = await anthropicMessages({system, messages, maxTokens: opts.maxTokens});
+  const block = (data.content||[]).find(b=>b.type==='text');
+  return block ? block.text : '';
+}
+function parseJsonLoose(text){
+  let t = text.trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  const first = t.indexOf('{'), last = t.lastIndexOf('}');
+  if(first>=0 && last>first) t = t.slice(first,last+1);
+  return JSON.parse(t);
+}
+
+async function classifyCapture(raw){
+  const projectList = STATE.projects.map(p=>p.name).join(', ') || '(none yet)';
+  const system = `You are the classification engine inside LifeOS, a personal AI chief-of-staff app. Classify the user's raw capture and extract structured fields.
+Respond with ONLY valid JSON, no markdown fences, no commentary.
+Schema:
+{"type": "TASK|IDEA|THOUGHT|NOTE|REMINDER|FOLLOWUP|DECISION|MEMORY",
+ "title": "short imperative title, under 8 words",
+ "project": "best-matching existing project name from the list, or null",
+ "suggestedNewProject": "a short new project name if this clearly needs one not in the list, else null",
+ "priority": "high|medium|low",
+ "dueDate": "YYYY-MM-DD or null",
+ "remindTime": "HH:MM 24h, only for REMINDER, else null",
+ "waitingOn": "person's name, only for FOLLOWUP, else null",
+ "commitment": true or false — true only if phrased as a promise/commitment the user made (e.g. \"I'll send this Friday\"), false for a casual to-do,
+ "estimatedMinutes": number or null,
+ "memoryCategory": "fact|preference|goal|relationship|pattern|commitment|belief|other — only for MEMORY",
+ "notes": "one short elaborating sentence, or null",
+ "reasoning": "one short sentence explaining the classification"}
+Today's date is ${todayISO()}. Existing projects: ${projectList}.
+Rules: IDEA and THOUGHT never get a dueDate. DECISION's title is the decision itself. Be decisive, do not hedge.`;
+  const text = await callClaudeText(system, raw, {maxTokens:400});
+  return parseJsonLoose(text);
+}
+
+function buildContext(){
+  return {
+    today: todayISO(), time: new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:currentTz()}).format(new Date()), timezone: currentTz(),
+    projects: STATE.projects.map(p=>({id:p.id, name:p.name, status:p.status, health:projectHealthKey(p), objective:p.objective, deadline:p.deadline||null})),
+    goals: STATE.goals.map(g=>({id:g.id, title:g.title, linkedProjects:(g.projectIds||[]).map(projectName)})),
+    openTasks: openTasksAll().map(t=>({id:t.id, title:t.title, project:projectName(t.projectId), due:t.dueDate, priority:t.priority, commitment:!!t.commitment, postponeCount:t.postponeCount||0})),
+    completedRecently: STATE.tasks.filter(t=>t.status==='completed' && daysSince(t.completedAt)<7).map(t=>t.title),
+    ideas: STATE.ideas.map(i=>({id:i.id, title:i.title, project:projectName(i.projectId), status:i.status})),
+    followups: activeFollowups().map(f=>({id:f.id, title:f.title, waitingOn:f.waitingOn, expected:f.expectedDate})),
+    reminders: pendingReminders().map(r=>({id:r.id, title:r.title, remindAt:r.remindAt})),
+    decisions: STATE.decisions.map(d=>({id:d.id, title:d.title, notes:d.notes})),
+    memories: STATE.memories.map(m=>({id:m.id, content:m.content, category:m.category, confidence:m.confidence})),
+    openLoops: openLoopsCount(),
+    recentActivity: STATE.activityLog.slice(-15).map(a=>({ts:a.ts, entityType:a.entityType, action:a.action, source:a.source})),
+  };
+}
+
+const PERSONA = `Persona: proactive, direct, calm, intelligent, honest, non-judgmental — and willing to challenge the user when their workload looks unrealistic. Never simply agree with everything.`;
+
+async function aiWhatNow(){
+  const candidates = rankedOpenTasks().slice(0,12).map(t=>({ id:t.id, title:t.title, project:projectName(t.projectId), priority:t.priority, dueDate:t.dueDate, commitment:!!t.commitment, postponeCount:t.postponeCount||0, score:priorityScore(t), daysSinceActivity:daysSince(t.updatedAt||t.createdAt) }));
+  if(candidates.length===0) return null;
+  const system = `You are the reasoning voice of LifeOS, a personal AI chief-of-staff. ${PERSONA}
+Given a ranked JSON list of candidate open tasks (already scored by urgency, priority, commitment and neglect), pick the ONE best task to work on right now and explain why in 1-3 concise sentences, second person.
+Respond with ONLY valid JSON: {"taskId":"...", "reasoning":"...", "durationMinutes": number, "challenge": "one short direct sentence if the workload looks unrealistic, else null"}`;
+  const text = await callClaudeText(system, JSON.stringify({today:todayISO(), candidates, totalOpenTasks:openTasksAll().length, openLoops:openLoopsCount()}), {maxTokens:400});
+  return parseJsonLoose(text);
+}
+
+async function aiDailyLine(){
+  const payload = {
+    overdueCount: overdueTasks().length, todayCount: todayTasks().length,
+    neglectedProjects: neglectedProjects().map(p=>p.name),
+    topTask: rankedOpenTasks()[0]? rankedOpenTasks()[0].title : null,
+    totalOpenTasks: openTasksAll().length, openCommitments: openCommitments().length, openLoops: openLoopsCount(),
+    pendingReminders: pendingReminders().length,
+  };
+  const system = `You are the reasoning voice of LifeOS, a personal AI chief-of-staff. ${PERSONA}
+Write exactly one short punchy sentence (max 24 words) briefing the user on how to approach today. Be specific, not generic — reference real numbers or names from the payload where useful.
+Respond with ONLY valid JSON: {"line":"..."}`;
+  const text = await callClaudeText(system, JSON.stringify(payload), {maxTokens:150});
+  return parseJsonLoose(text);
+}
+
+async function aiProjectAssessment(p){
+  const ts = STATE.tasks.filter(t=>t.projectId===p.id);
+  const open = ts.filter(t=>t.status!=='completed');
+  const ms = projectMilestones(p);
+  const system = `You are the reasoning voice of LifeOS, a personal AI chief-of-staff. Write a 1-2 sentence honest assessment of this project's health, referring to the project directly, calm and direct tone.
+Respond with ONLY valid JSON: {"assessment":"..."}`;
+  const payload = { project:p.name, objective:p.objective, status:p.status, health:projectHealthKey(p), openTasks:open.map(t=>t.title), completedCount:ts.filter(t=>t.status==='completed').length, openCount:open.length, milestones: ms.map(m=>({title:m.title,status:m.status})), daysSinceActivity: daysSince(lastActivityDate(p.id).toISOString()) };
+  const text = await callClaudeText(system, JSON.stringify(payload), {maxTokens:250});
+  return parseJsonLoose(text);
+}
+
+/* --------- Tool-calling assistant: capable of real actions on the data --------- */
+const TOOLS = [
+  {name:'create_task', description:'Create a new task for the user', input_schema:{type:'object', properties:{ title:{type:'string'}, project:{type:'string'}, priority:{type:'string',enum:['high','medium','low']}, dueDate:{type:'string',description:'YYYY-MM-DD'}, commitment:{type:'boolean'} }, required:['title']}},
+  {name:'update_task_status', description:'Mark a task completed or reopen it', input_schema:{type:'object', properties:{ taskId:{type:'string'}, status:{type:'string',enum:['completed','open']} }, required:['taskId','status']}},
+  {name:'reschedule_task', description:"Change a task's due date", input_schema:{type:'object', properties:{ taskId:{type:'string'}, newDueDate:{type:'string',description:'YYYY-MM-DD'} }, required:['taskId','newDueDate']}},
+  {name:'delete_task', description:'Delete a task', input_schema:{type:'object', properties:{ taskId:{type:'string'} }, required:['taskId']}},
+  {name:'create_project', description:'Create a new project', input_schema:{type:'object', properties:{ name:{type:'string'}, objective:{type:'string'} }, required:['name']}},
+  {name:'create_followup', description:'Track that the user is waiting on someone for something', input_schema:{type:'object', properties:{ title:{type:'string'}, waitingOn:{type:'string'}, expectedDate:{type:'string'} }, required:['title','waitingOn']}},
+  {name:'mark_followup_done', description:'Mark a follow-up as resolved', input_schema:{type:'object', properties:{ followupId:{type:'string'} }, required:['followupId']}},
+  {name:'create_decision', description:'Log a decision the user made', input_schema:{type:'object', properties:{ title:{type:'string'}, notes:{type:'string'} }, required:['title']}},
+  {name:'create_reminder', description:"Set a reminder for a specific date and time in the user's own timezone", input_schema:{type:'object', properties:{ title:{type:'string'}, date:{type:'string',description:'YYYY-MM-DD'}, time:{type:'string',description:'HH:MM in 24h format'} }, required:['title','date','time']}},
+  {name:'remember_this', description:'Save a durable memory: a fact, preference, goal, relationship detail, recurring pattern, commitment, or belief the user expressed', input_schema:{type:'object', properties:{ content:{type:'string'}, category:{type:'string',enum:['fact','preference','goal','relationship','pattern','commitment','belief','other']}, confidence:{type:'string', enum:['stated','inferred'], description:"'stated' if the user said this directly, 'inferred' if you're deducing it"} }, required:['content']}},
+  {name:'forget_memory', description:'Delete a memory the user no longer wants remembered', input_schema:{type:'object', properties:{ memoryId:{type:'string'} }, required:['memoryId']}},
+];
+/* Authorization tiers: low-risk writes execute immediately; medium/high always require
+   an explicit confirm click before executeTool ever runs. */
+const TOOL_RISK = {
+  create_task:'low', update_task_status:'low', create_followup:'low', mark_followup_done:'low',
+  create_decision:'low', create_reminder:'low', remember_this:'low',
+  reschedule_task:'medium', create_project:'medium',
+  delete_task:'high', forget_memory:'high',
+};
+function describeAction(name, input){
+  switch(name){
+    case 'create_task': return `Create task "${input.title}"${input.dueDate? ' — due '+input.dueDate:''}`;
+    case 'update_task_status': { const t=STATE.tasks.find(x=>x.id===input.taskId); return `Set "${t?t.title:input.taskId}" to ${input.status}`; }
+    case 'reschedule_task': { const t=STATE.tasks.find(x=>x.id===input.taskId); return `Move "${t?t.title:input.taskId}" to ${input.newDueDate}`; }
+    case 'delete_task': { const t=STATE.tasks.find(x=>x.id===input.taskId); return `Delete task "${t?t.title:input.taskId}"`; }
+    case 'create_project': return `Create a new project "${input.name}"`;
+    case 'create_followup': return `Track follow-up with ${input.waitingOn}: "${input.title}"`;
+    case 'mark_followup_done': { const f=STATE.followups.find(x=>x.id===input.followupId); return `Mark follow-up with ${f?f.waitingOn:'someone'} as done`; }
+    case 'create_decision': return `Log decision "${input.title}"`;
+    case 'create_reminder': return `Set reminder "${input.title}" for ${fmtDateTime(zonedToUtcISO(input.date, input.time, currentTz()))}`;
+    case 'remember_this': return `Remember: "${input.content}"`;
+    case 'forget_memory': { const m=STATE.memories.find(x=>x.id===input.memoryId); return `Forget: "${m?m.content:input.memoryId}"`; }
+    default: return name;
+  }
+}
+function executeTool(name, input){
+  try{
+    switch(name){
+      case 'create_task': { const projectId = input.project? findExistingProject(input.project) : null; const noMatch = input.project && !projectId; const t = addEntity('tasks', {title:input.title, projectId, priority:input.priority||'medium', dueDate:input.dueDate||null, commitment:!!input.commitment}, 'ai'); return {ok:true, message:`Created task "${t.title}"${noMatch? ' (no matching project — ask to create one if you want it linked)':''}`}; }
+      case 'update_task_status': { const t = STATE.tasks.find(x=>x.id===input.taskId); if(!t) return {ok:false, error:'Task not found'}; updateEntity('tasks', t.id, {status:input.status, completedAt: input.status==='completed'?nowISO():null}, 'ai'); return {ok:true, message:`Set "${t.title}" to ${input.status}`}; }
+      case 'reschedule_task': { const t = STATE.tasks.find(x=>x.id===input.taskId); if(!t) return {ok:false, error:'Task not found'}; updateEntity('tasks', t.id, {dueDate:input.newDueDate, postponeCount:(t.postponeCount||0)+1}, 'ai'); return {ok:true, message:`Moved "${t.title}" to ${input.newDueDate}`}; }
+      case 'delete_task': { const t = STATE.tasks.find(x=>x.id===input.taskId); if(!t) return {ok:false, error:'Task not found'}; deleteEntity('tasks', t.id, 'ai'); return {ok:true, message:`Deleted "${t.title}"`}; }
+      case 'create_project': { const p = addEntity('projects', {name:input.name, objective:input.objective||''}, 'ai'); return {ok:true, message:`Created project "${p.name}"`}; }
+      case 'create_followup': { const projectId = null; const f = addEntity('followups', {title:input.title, waitingOn:input.waitingOn, expectedDate:input.expectedDate||null, projectId}, 'ai'); return {ok:true, message:`Tracking follow-up with ${f.waitingOn}`}; }
+      case 'mark_followup_done': { const f = STATE.followups.find(x=>x.id===input.followupId); if(!f) return {ok:false, error:'Follow-up not found'}; updateEntity('followups', f.id, {status:'done'}, 'ai'); return {ok:true, message:`Marked follow-up with ${f.waitingOn} as done`}; }
+      case 'create_decision': { const d = addEntity('decisions', {title:input.title, notes:input.notes||null}, 'ai'); return {ok:true, message:`Logged decision "${d.title}"`}; }
+      case 'create_reminder': { const remindAt = zonedToUtcISO(input.date, input.time, currentTz()); const r = addEntity('reminders', {title:input.title, remindAt}, 'ai'); return {ok:true, message:`Reminder set for ${fmtDateTime(remindAt)}`}; }
+      case 'remember_this': { addEntity('memories', {content:input.content, category:input.category||'other', confidence:input.confidence||'inferred', source:'ai', lastUsed:nowISO(), lastConfirmed:nowISO()}, 'ai'); return {ok:true, message:'Remembered.'}; }
+      case 'forget_memory': { const m = STATE.memories.find(x=>x.id===input.memoryId); if(!m) return {ok:false, error:'Memory not found'}; deleteEntity('memories', m.id, 'ai'); return {ok:true, message:'Forgotten.'}; }
+      default: return {ok:false, error:'Unknown tool'};
+    }
+  }catch(e){ return {ok:false, error:String(e)}; }
+}
+let PENDING_ACTIONS = {}; // id -> { system, messages, firstContent, toolUses }
+let PENDING_UI = null;    // { id, items:[str], risk:'medium'|'high' }
+
+async function aiAskAssistant(question){
+  const context = buildContext();
+  const system = `You are the conversational voice of LifeOS, a personal AI chief-of-staff. ${PERSONA}
+You have access to tools that make real changes to the user's data — use them when the user clearly asks for an action (create/move/complete/delete/remember/forget/reschedule/log something). For plain questions, just answer from the context — never invent tasks, projects, or facts not present in it. If context doesn't contain the answer, say so plainly. Some tools are automatically held for the user's explicit confirmation before they execute (deleting things, forgetting memory, rescheduling, creating a new project) — that is handled by the app, so just call the tool normally and do not ask permission yourself in your reply. After using tools, briefly confirm in plain prose what happened. Keep replies to 1-4 sentences, conversational, second person, no markdown, no JSON in the visible reply.
+Context: ${JSON.stringify(context)}`;
+  const history = STATE.chat.slice(-6).map(m=>({role: m.role==='user'?'user':'assistant', content:m.text}));
+  const messages = history.concat([{role:'user', content:question}]);
+  const first = await anthropicMessages({system, messages, tools:TOOLS, maxTokens:500});
+  const toolUses = (first.content||[]).filter(b=>b.type==='tool_use');
+  if(toolUses.length===0){
+    const block = (first.content||[]).find(b=>b.type==='text');
+    return { text: block?block.text:'', pending:null };
+  }
+  const needsConfirm = toolUses.some(tu => (TOOL_RISK[tu.name]||'high') !== 'low');
+  if(!needsConfirm){
+    const actionMsgs = [];
+    const toolResults = toolUses.map(tu=>{
+      const result = executeTool(tu.name, tu.input);
+      actionMsgs.push(result.ok? result.message : `Couldn't complete that: ${result.error}`);
+      return { type:'tool_result', tool_use_id: tu.id, content: JSON.stringify(result) };
+    });
+    const messages2 = messages.concat([{role:'assistant', content:first.content}, {role:'user', content:toolResults}]);
+    const second = await anthropicMessages({system, messages:messages2, tools:TOOLS, maxTokens:400});
+    const block2 = (second.content||[]).find(b=>b.type==='text');
+    return { text: block2? block2.text : actionMsgs.join(' '), pending:null };
+  }
+  // Medium/high-risk action(s): hold for explicit confirmation, execute nothing yet.
+  const id = uid();
+  const risk = toolUses.some(tu => (TOOL_RISK[tu.name]||'high')==='high') ? 'high' : 'medium';
+  const items = toolUses.map(tu => describeAction(tu.name, tu.input));
+  PENDING_ACTIONS[id] = { system, messages, firstContent: first.content, toolUses };
+  return { text:null, pending:{ id, items, risk } };
+}
+async function confirmPendingAction(id, accepted){
+  const p = PENDING_ACTIONS[id];
+  PENDING_UI = null;
+  if(!p){ render(); return; }
+  delete PENDING_ACTIONS[id];
+  if(!accepted){
+    STATE.chat.push({role:'assistant', text:"Okay — I won't make that change."});
+    scheduleSave(); render(); return;
+  }
+  const actionMsgs = [];
+  const toolResults = p.toolUses.map(tu=>{
+    const result = executeTool(tu.name, tu.input);
+    actionMsgs.push(result.ok? result.message : `Couldn't complete that: ${result.error}`);
+    return { type:'tool_result', tool_use_id: tu.id, content: JSON.stringify(result) };
+  });
+  const messages2 = p.messages.concat([{role:'assistant', content:p.firstContent}, {role:'user', content:toolResults}]);
+  try{
+    const second = await anthropicMessages({system:p.system, messages:messages2, tools:TOOLS, maxTokens:400});
+    const block2 = (second.content||[]).find(b=>b.type==='text');
+    STATE.chat.push({role:'assistant', text: block2? block2.text : actionMsgs.join(' ')});
+  }catch(e){
+    STATE.chat.push({role:'assistant', text: actionMsgs.join(' ')});
+  }
+  scheduleSave(); render();
+  const log = document.getElementById('chatLog'); if(log) log.scrollTop = log.scrollHeight;
+}
+
+/* ---------------------------- Mutations / project & goal helpers ---------------------------- */
+/* Guardrail: capture and low-risk AI tools never silently create a new project.
+   They only match an EXISTING project by name; anything else comes back as a
+   suggestion the user has to approve (see handleCapture below). */
+function findExistingProject(name){
+  if(!name) return null;
+  const existing = STATE.projects.find(p=>p.name.toLowerCase()===name.toLowerCase());
+  return existing? existing.id : null;
+}
+/* Still used by explicit, deliberate project-creation actions (the New Project
+   form, promoting an idea, and the AI's own create_project tool) — those are
+   the user unambiguously asking for a project, not an inference. */
+function findOrCreateProject(name){
+  if(!name) return null;
+  const existing = findExistingProject(name);
+  if(existing) return existing;
+  return addEntity('projects', {name, objective:'', priority:'medium'}, 'ai').id;
+}
+
+/* ---------------------------- Universal capture ---------------------------- */
+async function handleCapture(raw){
+  if(!raw || !raw.trim()) return;
+  const captureInput = document.getElementById('captureInput');
+  const captureBtn = document.getElementById('captureBtn');
+  if(captureBtn) captureBtn.innerHTML = '<span class="loader"></span>';
+  try{
+    const c = await classifyCapture(raw.trim());
+    let projectId = null;
+    let suggestedProjectName = null;
+    const wantedName = c.project || c.suggestedNewProject || null;
+    if(wantedName){
+      const existing = findExistingProject(wantedName);
+      if(existing) projectId = existing; else suggestedProjectName = wantedName;
+    }
+
+    let created, label, collection;
+    switch(c.type){
+      case 'TASK':
+        collection='tasks'; created = addEntity('tasks', { title:c.title, projectId, priority:c.priority||'medium', dueDate:c.dueDate||null, commitment:!!c.commitment, estimatedMinutes:c.estimatedMinutes||null }, 'user');
+        label = 'Task'; break;
+      case 'IDEA':
+        collection='ideas'; created = addEntity('ideas', { title:c.title, projectId, notes:c.notes||null }, 'user');
+        label = 'Idea'; break;
+      case 'THOUGHT':
+        collection='thoughts'; created = addEntity('thoughts', { title:c.title, notes:c.notes||null, projectId }, 'user');
+        label = 'Thought'; break;
+      case 'REMINDER': {
+        const date = c.dueDate || todayISO();
+        const time = c.remindTime || '09:00';
+        collection='reminders'; created = addEntity('reminders', { title:c.title, remindAt: zonedToUtcISO(date, time, currentTz()) }, 'user');
+        label = 'Reminder'; break;
+      }
+      case 'FOLLOWUP':
+        collection='followups'; created = addEntity('followups', { title:c.title, waitingOn:c.waitingOn||null, expectedDate:c.dueDate||null, projectId }, 'user');
+        label = 'Follow-up'; break;
+      case 'DECISION':
+        collection='decisions'; created = addEntity('decisions', { title:c.title, notes:c.notes||null, projectId }, 'user');
+        label = 'Decision'; break;
+      case 'MEMORY':
+        collection='memories'; created = addEntity('memories', { content:c.notes||c.title, category:c.memoryCategory||'other', confidence:'stated', source:'user', lastUsed:nowISO(), lastConfirmed:nowISO() }, 'user');
+        label = 'Memory'; break;
+      default:
+        collection='notes'; created = addEntity('notes', { title:c.title||raw.trim().slice(0,80), notes:c.notes||null, projectId }, 'user');
+        label = 'Note';
+    }
+    if(captureInput) captureInput.value='';
+    render();
+    if(suggestedProjectName){
+      toast(`New project? "${suggestedProjectName}"`, {
+        label: 'Create & link',
+        onClick: ()=>{
+          const p = addEntity('projects', {name:suggestedProjectName, objective:''}, 'user');
+          updateEntity(collection, created.id, {projectId:p.id}, 'user');
+          toast(`Linked to "${p.name}"`);
+          render();
+        }
+      });
+    } else {
+      toast(`Captured as ${label}${projectId? ' · '+projectName(projectId):''}`);
+    }
+  }catch(e){
+    console.error(e);
+    addEntity('notes', { title: raw.trim().slice(0,80), notes:null }, 'user');
+    toast('Saved as a note (AI classification unavailable)');
+    if(captureInput) captureInput.value='';
+    render();
+  }finally{
+    if(captureBtn) captureBtn.innerHTML = ICONS.send;
+  }
+}
+
+/* ---------------------------- Voice input ---------------------------- */
+let recognizer = null;
+let voiceFinalTranscript = '';
+let voiceStoppedManually = false;
+function toggleVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast('Voice input is not supported in this browser'); return; }
+  const micBtn = document.getElementById('micBtn');
+  if(recognizer){
+    voiceStoppedManually = true;
+    recognizer.stop(); // triggers onend below, which submits whatever was captured
+    if(micBtn) micBtn.classList.remove('rec');
+    return;
+  }
+  voiceFinalTranscript = '';
+  voiceStoppedManually = false;
+  recognizer = new SR();
+  recognizer.lang = 'en-US';
+  recognizer.interimResults = true; // show live text as you speak
+  recognizer.continuous = true;     // don't stop at the first short pause
+  recognizer.onresult = (e)=>{
+    let interim = '';
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      const transcript = e.results[i][0].transcript;
+      if(e.results[i].isFinal) voiceFinalTranscript += transcript + ' ';
+      else interim += transcript;
+    }
+    const input = document.getElementById('captureInput');
+    if(input) input.value = (voiceFinalTranscript + interim).trim();
+  };
+  recognizer.onend = ()=>{
+    if(micBtn) micBtn.classList.remove('rec');
+    const text = voiceFinalTranscript.trim() || (document.getElementById('captureInput')||{}).value || '';
+    recognizer = null;
+    if(text) handleCapture(text);
+    else if(!voiceStoppedManually) toast("Didn't catch anything — try again");
+  };
+  recognizer.onerror = (e)=>{
+    if(micBtn) micBtn.classList.remove('rec'); recognizer=null;
+    if(e.error==='not-allowed' || e.error==='service-not-allowed'){
+      toast('Microphone blocked — if this is inside a chat preview, open the downloaded file directly in Chrome or Edge and allow mic access there.');
+    } else if(e.error==='no-speech'){
+      toast("Didn't catch that — try again");
+    } else {
+      toast('Voice capture error: '+e.error);
+    }
+  };
+  try{
+    recognizer.start(); if(micBtn) micBtn.classList.add('rec');
+    toast('Listening — tap the mic again when done');
+  }catch(err){
+    recognizer=null; if(micBtn) micBtn.classList.remove('rec');
+    toast('Could not start the microphone in this environment.');
+  }
+}
+
+/* ---------------------------- Reminder engine ---------------------------- */
+function requestNotifPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission==='default') Notification.requestPermission();
+}
+function checkReminders(){
+  const now = new Date();
+  STATE.reminders.forEach(r=>{
+    if(r.status==='pending' && new Date(r.remindAt) <= now) fireReminder(r);
+  });
+}
+function fireReminder(r){
+  addEntity('notifications', { text: r.title, relatedId:r.id }, 'system');
+  if(window.Notification && Notification.permission==='granted'){
+    try{ new Notification('LifeOS', {body:r.title}); }catch(e){}
+  }
+  toast('Reminder: '+r.title);
+  if(r.recurrence==='daily'){ const n=new Date(r.remindAt); n.setDate(n.getDate()+1); updateEntity('reminders', r.id, {remindAt:n.toISOString(), status:'pending'}, 'system'); }
+  else if(r.recurrence==='weekly'){ const n=new Date(r.remindAt); n.setDate(n.getDate()+7); updateEntity('reminders', r.id, {remindAt:n.toISOString(), status:'pending'}, 'system'); }
+  else updateEntity('reminders', r.id, {status:'fired'}, 'system');
+  render();
+}
+function snoozeReminder(id, hours){
+  const r = STATE.reminders.find(x=>x.id===id); if(!r) return;
+  const n = new Date(); n.setHours(n.getHours()+hours);
+  updateEntity('reminders', id, {remindAt:n.toISOString(), status:'pending'}, 'user');
+  toast('Snoozed'); render();
+}
+
+/* ---------------------------- Rendering ---------------------------- */
+function setView(v){ STATE.view=v; render(); }
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `${renderSidebar()}<div class="main">${renderTopbar()}<div class="content fade-in">${renderView()}</div></div>`;
+}
+
+function renderSidebar(){
+  const nav = [
+    ['dashboard','Dashboard','dashboard', 0],
+    ['tasks','Tasks','tasks', overdueTasks().length],
+    ['projects','Projects','projects', 0],
+    ['goals','Goals','goals', 0],
+    ['ideas','Ideas','ideas', 0],
+    ['followups','Follow-ups','followups', activeFollowups().filter(f=>f.expectedDate && daysUntil(f.expectedDate)<=0).length],
+    ['reminders','Reminders','reminders', pendingReminders().filter(r=>new Date(r.remindAt)<=new Date()).length],
+    ['decisions','Decisions','decisions', 0],
+    ['memory','Memory','memory', 0],
+  ];
+  return `
+  <div class="sidebar">
+    <div class="brand"><span class="brand-mark"></span><span class="brand-name">LifeOS</span></div>
+    <div class="brand-sub">Chief of Staff</div>
+    <div class="nav">
+      ${nav.map(([id,label,icon,badge])=>`
+        <button class="nav-item ${STATE.view===id?'active':''}" onclick="setView('${id}')">${ICONS[icon]}<span>${label}</span>${badge>0?`<span class="nav-badge">${badge}</span>`:''}</button>`).join('')}
+      <button class="nav-item ${STATE.view==='search'?'active':''}" onclick="setView('search')">${ICONS.search}<span>Search</span></button>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-foot"><button class="nav-item ${STATE.view==='settings'?'active':''}" onclick="setView('settings')">${ICONS.settings}<span>Settings</span></button></div>
+  </div>`;
+}
+
+function renderTopbar(){
+  const unread = STATE.notifications.filter(n=>!n.read).length;
+  return `
+  <div class="topbar">
+    <div class="capture-row">
+      <div class="capture-box">
+        <span class="capture-icon">${ICONS.sparkle}</span>
+        <input id="captureInput" type="text" placeholder="Tell your assistant… a task, an idea, who you're waiting on, or remember this" onkeydown="if(event.key==='Enter'){handleCapture(this.value)}">
+      </div>
+      <button class="btn-icon" id="micBtn" title="Voice capture" onclick="toggleVoice()">${ICONS.mic}</button>
+      <button class="btn-icon" title="Notifications" onclick="openNotifications()">${ICONS.bell}${unread>0?`<span class="bell-badge">${unread}</span>`:''}</button>
+      <button class="btn btn-brass" id="captureBtn" onclick="handleCapture(document.getElementById('captureInput').value)">${ICONS.send}<span>Capture</span></button>
+    </div>
+  </div>`;
+}
+function openNotifications(){ STATE.notifications.forEach(n=>n.read=true); scheduleSave(); setView('reminders'); }
+
+function renderView(){
+  switch(STATE.view){
+    case 'dashboard': return renderDashboard();
+    case 'tasks': return renderTasksView();
+    case 'projects': return renderProjectsView();
+    case 'goals': return renderGoalsView();
+    case 'ideas': return renderIdeasView();
+    case 'followups': return renderFollowupsView();
+    case 'reminders': return renderRemindersView();
+    case 'decisions': return renderDecisionsView();
+    case 'memory': return renderMemoryView();
+    case 'search': return renderSearchView();
+    case 'settings': return renderSettingsView();
+    default: return renderDashboard();
+  }
+}
+
+/* ---------- Dashboard ---------- */
+function renderDashboard(){
+  const ranked = rankedOpenTasks();
+  const top = ranked[0]; const rest = ranked.slice(1,5);
+  const overdue = overdueTasks();
+  const dueFollowups = activeFollowups().filter(f=>f.expectedDate && daysUntil(f.expectedDate)<=0);
+  const neglected = neglectedProjects();
+  const recentThoughts = [].concat(STATE.ideas, STATE.thoughts).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,4);
+  const activeProjects = STATE.projects.filter(p=>p.status==='active');
+  const waitingPeople = Array.from(new Set(activeFollowups().map(f=>f.waitingOn||'someone')));
+  const loops = openLoopsCount();
+
+  return `
+  <div class="page-eyebrow">${new Date().toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric'})}</div>
+  <div class="page-title" style="margin-bottom:16px;">${greeting()}, ${escapeHtml(STATE.userName)}.</div>
+
+  <div class="card briefing-card" id="briefingCard">
+    <span class="briefing-kicker">AI Briefing</span>
+    ${STATE.lastDailyDate===todayISO() && STATE.lastDailyLine ? `<span class="briefing-line serif">${escapeHtml(STATE.lastDailyLine)}</span>` : `<span class="loader"></span> <span class="tiny">preparing your briefing…</span>`}
+  </div>
+
+  <div class="grid-2col">
+    <div class="stack">
+      ${top ? `
+      <div class="priority-hero">
+        <div class="priority-kicker">Focus</div>
+        <div class="priority-title">${escapeHtml(top.title)}</div>
+        <div class="priority-meta">
+          ${top.projectId? `<span class="pill pill-proj">${escapeHtml(projectName(top.projectId))}</span>`:''}
+          <span class="pill pill-${top.priority}">${top.priority}</span>
+          ${top.commitment? `<span class="pill pill-commit">commitment</span>`:''}
+          ${top.dueDate? `<span class="pill pill-status">${fmtDate(top.dueDate)}</span>`:''}
+          ${top.postponeCount>0? `<span class="pill pill-overdue">postponed ${top.postponeCount}×</span>`:''}
+        </div>
+        <div id="whatNowNote" class="margin-note">Tap "Ask why" and I'll explain what's blocking on this, and whether anything else deserves your attention more.</div>
+        <div class="priority-actions">
+          <button class="btn btn-brass btn-sm" onclick="completeTask('${top.id}')">Mark done</button>
+          <button class="btn btn-ghost btn-sm" onclick="askWhatNow()">${ICONS.sparkle}<span>Ask why this, right now</span></button>
+        </div>
+      </div>` : `
+      <div class="card card-pad empty"><div class="empty-icon">${ICONS.sparkle}</div><span class="serif">Nothing captured yet</span>Tell your assistant what's on your mind above.</div>`}
+
+      ${rest.length? `<div class="section-label">Also worth doing today <span class="count">${rest.length}</span></div><div class="stack">${rest.map(t=>taskRowHtml(t)).join('')}</div>` : ''}
+
+      <div class="section-label">Active projects <span class="count">${activeProjects.length}</span></div>
+      ${activeProjects.length? `<div class="proj-grid">${activeProjects.map(p=>projectCardHtml(p)).join('')}</div>` :
+        `<div class="card card-pad empty" style="padding:26px;"><span class="serif" style="font-size:14px;">No active projects yet.</span> Capture something and I'll suggest one.</div>`}
+    </div>
+
+    <div class="stack">
+      <div class="card card-pad">
+        <div class="stat-row">
+          <div class="stat-box"><div class="stat-num">${activeProjects.length}</div><div class="stat-label">Active projects</div></div>
+          <div class="stat-box"><div class="stat-num">${openCommitments().length}</div><div class="stat-label">Commitments</div></div>
+          <div class="stat-box"><div class="stat-num">${loops}</div><div class="stat-label">Open loops</div></div>
+        </div>
+        ${loops>12? `<div class="tiny" style="margin-top:10px;color:var(--coral);">That's a lot open at once — worth closing a few loops before adding more.</div>`:''}
+      </div>
+
+      <div class="card card-pad">
+        <div class="section-label" style="margin:0 0 10px 0;">Attention required</div>
+        ${(overdue.length+dueFollowups.length+neglected.length)===0 ? `<div style="font-size:13px;color:var(--text-dim);padding:6px 0;">Nothing urgent. You're caught up.</div>` : `
+        <div>
+          ${overdue.map(t=>`<div class="attn-item"><span class="attn-dot"></span><div><div class="attn-text"><b>${escapeHtml(t.title)}</b> is overdue</div><div class="attn-sub">${t.projectId?escapeHtml(projectName(t.projectId))+' · ':''}was due ${fmtDate(t.dueDate)}</div></div></div>`).join('')}
+          ${dueFollowups.map(f=>`<div class="attn-item"><span class="attn-dot" style="background:var(--brass)"></span><div><div class="attn-text">Follow up with <b>${escapeHtml(f.waitingOn||'someone')}</b></div><div class="attn-sub">${escapeHtml(f.title)}</div></div></div>`).join('')}
+          ${neglected.map(p=>`<div class="attn-item"><span class="attn-dot" style="background:var(--violet)"></span><div><div class="attn-text"><b>${escapeHtml(p.name)}</b> has gone quiet</div><div class="attn-sub">No activity in ${daysSince(lastActivityDate(p.id).toISOString())} days</div></div></div>`).join('')}
+        </div>`}
+      </div>
+
+      <div class="card card-pad">
+        <div class="section-label" style="margin:0 0 10px 0;">Ask your Chief of Staff</div>
+        <div class="chat-panel">
+          <div class="chat-log" id="chatLog">
+            ${STATE.chat.length===0 && !PENDING_UI? `<div class="chat-hint">Try: "what am I waiting for?", "move the SwingSense task to Monday", or "remember that Ravi prefers WhatsApp".</div>` :
+              STATE.chat.slice(-8).map(m=> m.role==='user' ? `<div class="chat-msg user"><b>You</b> — ${escapeHtml(m.text)}</div>` : `<div class="chat-msg ai">${escapeHtml(m.text)}</div>`).join('')}
+            ${PENDING_UI? confirmCardHtml(PENDING_UI) : ''}
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chatInput" placeholder="Ask or tell me to do something…" onkeydown="if(event.key==='Enter'){askAssistant(this.value)}">
+            <button class="btn-icon" onclick="askAssistant(document.getElementById('chatInput').value)">${ICONS.send}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <div class="section-label" style="margin:0 0 10px 0;">Waiting for <span class="count">${waitingPeople.length}</span></div>
+        ${waitingPeople.length? `<div style="display:flex;flex-wrap:wrap;gap:6px;">${waitingPeople.map(p=>`<span class="pill pill-status">${escapeHtml(p)}</span>`).join('')}</div>` : `<div style="font-size:13px;color:var(--text-dim);">Not waiting on anyone right now.</div>`}
+      </div>
+
+      <div class="card card-pad">
+        <div class="section-label" style="margin:0 0 10px 0;">Recent thoughts <span class="count">${recentThoughts.length}</span></div>
+        ${recentThoughts.length? recentThoughts.map(i=>`<div style="padding:8px 0;border-bottom:1px solid var(--border-soft);"><div class="serif" style="font-style:italic;font-size:13.5px;">${escapeHtml(i.title)}</div><div style="font-size:11px;color:var(--text-faint);margin-top:2px;">${i.projectId? escapeHtml(projectName(i.projectId)):'Unassigned'}</div></div>`).join('') : `<div style="font-size:13px;color:var(--text-dim);">Nothing captured recently.</div>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+function confirmCardHtml(p){
+  const high = p.risk==='high';
+  return `
+  <div class="confirm-card ${high?'confirm-high':'confirm-medium'}">
+    <div class="confirm-kicker">${high? 'This needs your confirmation':'Confirm before I do this'}</div>
+    <ul class="confirm-list">${p.items.map(i=>`<li>${escapeHtml(i)}</li>`).join('')}</ul>
+    <div class="confirm-actions">
+      <button class="btn btn-brass btn-sm" onclick="confirmPendingAction('${p.id}', true)">Confirm</button>
+      <button class="btn btn-ghost btn-sm" onclick="confirmPendingAction('${p.id}', false)">Cancel</button>
+    </div>
+  </div>`;
+}
+function taskRowHtml(t){
+  const overdue = t.dueDate && daysUntil(t.dueDate)<0 && t.status!=='completed';
+  return `
+  <div class="task-row">
+    <button class="checkbox ${t.status==='completed'?'checked':''}" onclick="toggleTask('${t.id}')">${t.status==='completed'?ICONS.check:''}</button>
+    <div class="task-body">
+      <div class="task-title ${t.status==='completed'?'done':''}">${escapeHtml(t.title)}</div>
+      <div class="task-meta">
+        ${t.projectId? `<span class="pill pill-proj">${escapeHtml(projectName(t.projectId))}</span>`:''}
+        <span class="pill pill-${t.priority}">${t.priority}</span>
+        ${t.commitment? `<span class="pill pill-commit">commitment</span>`:''}
+        ${t.dueDate? `<span class="${overdue?'pill pill-overdue':''}">${overdue?'overdue · ':''}${fmtDate(t.dueDate)}</span>`:''}
+        ${t.postponeCount>0? `<span>postponed ${t.postponeCount}×</span>`:''}
+      </div>
+    </div>
+    <div class="task-actions">
+      <button class="btn-icon" title="Postpone one day" onclick="postponeTask('${t.id}')">${ICONS.clock}</button>
+      <button class="btn-icon" title="Delete" onclick="removeTask('${t.id}')">${ICONS.x}</button>
+    </div>
+  </div>`;
+}
+function projectCardHtml(p){
+  const progress = projectProgress(p);
+  const openCt = STATE.tasks.filter(t=>t.projectId===p.id && t.status!=='completed').length;
+  const health = HEALTH_META[projectHealthKey(p)];
+  const pulse = projectPulse(p);
+  return `
+  <div class="card proj-card" onclick="openProjectModal('${p.id}')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div class="proj-name">${escapeHtml(p.name)}</div>
+      <span class="pill ${health.cls}" title="${escapeHtml(health.desc)}">${health.label}</span>
+    </div>
+    <div class="proj-desc">${escapeHtml(p.objective||p.description||'No objective set yet.')}</div>
+    <div class="tiny" style="color:var(--text-faint);">${escapeHtml(pulse)}</div>
+    ${progress!==null? `<div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>` : ''}
+    <div class="proj-foot"><span>${openCt} open task${openCt===1?'':'s'}</span>${progress!==null? `<span class="mono">${progress}%</span>` : `<span>—</span>`}</div>
+  </div>`;
+}
+
+/* ---------- Tasks view ---------- */
+function renderTasksView(){
+  const groups = [
+    ['Overdue', overdueTasks()],
+    ['Today', openTasksAll().filter(t=>t.dueDate && daysUntil(t.dueDate)===0)],
+    ['Upcoming', openTasksAll().filter(t=>t.dueDate && daysUntil(t.dueDate)>0)],
+    ['Inbox', openTasksAll().filter(t=>!t.dueDate && t.status==='open')],
+    ['Someday', openTasksAll().filter(t=>t.status==='someday')],
+    ['Completed', STATE.tasks.filter(t=>t.status==='completed').slice().sort((a,b)=>new Date(b.completedAt||b.updatedAt)-new Date(a.completedAt||a.updatedAt)).slice(0,20)],
+  ];
+  return `
+  <div class="page-head"><div><div class="page-eyebrow">Everything you've committed to</div><div class="page-title">Tasks</div></div>
+  <button class="btn btn-ghost btn-sm" onclick="openTaskModal()">${ICONS.plus}<span>New task</span></button></div>
+  ${groups.map(([label,list])=> list.length? `<div class="section-label">${label} <span class="count">${list.length}</span></div><div class="stack">${list.map(t=>taskRowHtml(t)).join('')}</div>`:'').join('')}
+  ${STATE.tasks.length===0? `<div class="card card-pad empty"><div class="empty-icon">${ICONS.tasks}</div><span class="serif">No tasks yet</span>Capture one above, or add it manually.</div>`:''}
+  `;
+}
+
+/* ---------- Projects view ---------- */
+function renderProjectsView(){
+  return `
+  <div class="page-head"><div><div class="page-eyebrow">Where the work lives</div><div class="page-title">Projects</div></div>
+  <button class="btn btn-ghost btn-sm" onclick="openProjectFormModal()">${ICONS.plus}<span>New project</span></button></div>
+  ${STATE.projects.length? `<div class="tiny" style="margin-bottom:14px;">Each project's <b style="color:var(--text-dim)">Pulse</b> is assessed automatically from overdue tasks, postponements and inactivity — the line under each project spells out why. <b style="color:var(--text-dim)">Healthy</b> · <b style="color:var(--brass)">Needs attention</b> · <b style="color:var(--coral)">At risk</b> · <b style="color:var(--text-faint)">Stalled</b></div>`:''}
+  ${STATE.projects.length? `<div class="proj-grid">${STATE.projects.map(p=>projectCardHtml(p)).join('')}</div>` :
+  `<div class="card card-pad empty"><div class="empty-icon">${ICONS.projects}</div><span class="serif">No projects yet</span>Projects form automatically when you capture something that needs one — or start one here.</div>`}
+  `;
+}
+
+/* ---------- Goals view ---------- */
+function renderGoalsView(){
+  return `
+  <div class="page-head"><div><div class="page-eyebrow">What it's all in service of</div><div class="page-title">Goals</div></div>
+  <button class="btn btn-ghost btn-sm" onclick="openGoalModal()">${ICONS.plus}<span>New goal</span></button></div>
+  ${STATE.goals.length? `<div class="stack">${STATE.goals.map(g=>{
+    const linked = STATE.projects.filter(p=>(g.projectIds||[]).includes(p.id));
+    return `<div class="card card-pad">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="proj-name">${escapeHtml(g.title)}</div><div class="proj-desc" style="margin-top:4px;">${escapeHtml(g.description||'')}</div></div>
+        <button class="btn-icon" onclick="removeGoal('${g.id}')">${ICONS.x}</button>
+      </div>
+      ${linked.length? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;">${linked.map(p=>`<span class="pill pill-proj">${escapeHtml(p.name)}</span>`).join('')}</div>` : `<div style="margin-top:10px;font-size:12px;color:var(--text-faint);">No projects linked yet.</div>`}
+    </div>`;
+  }).join('')}</div>` : `<div class="card card-pad empty"><div class="empty-icon">${ICONS.goals}</div><span class="serif">No goals set</span>Goals sit above projects — the "why" behind the work.</div>`}
+  `;
+}
+
+/* ---------- Ideas view ---------- */
+function renderIdeasView(){
+  const all = STATE.ideas.slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  return `
+  <div class="page-head"><div><div class="page-eyebrow">Explorations, not commitments</div><div class="page-title">Ideas vault</div></div></div>
+  ${all.length? `<div class="idea-grid">${all.map(i=>`
+    <div class="idea-card card">
+      <div class="idea-title">${escapeHtml(i.title)}</div>
+      ${i.notes? `<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;line-height:1.5;">${escapeHtml(i.notes)}</div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="idea-meta">${i.projectId? escapeHtml(projectName(i.projectId)) : 'Unassigned'}</span>
+        <div style="display:flex;gap:4px;">
+          <button class="btn-icon" title="Promote to project" onclick="promoteIdea('${i.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <button class="btn-icon" title="Delete" onclick="removeIdea('${i.id}')">${ICONS.x}</button>
+        </div>
+      </div>
+    </div>`).join('')}</div>` :
+  `<div class="card card-pad empty"><div class="empty-icon">${ICONS.ideas}</div><span class="serif">No ideas yet</span>Say "I have an idea for…" and it'll land here — no task created automatically.</div>`}
+  `;
+}
+
+/* ---------- Follow-ups view ---------- */
+function renderFollowupsView(){
+  const all = STATE.followups.slice().sort((a,b)=>(a.expectedDate||'9999')<(b.expectedDate||'9999')?-1:1);
+  return `
+  <div class="page-head"><div><div class="page-eyebrow">What you're waiting on others for</div><div class="page-title">Follow-ups</div></div></div>
+  ${all.length? `<div class="stack">${all.map(f=>{
+    const due = f.expectedDate && daysUntil(f.expectedDate)<=0 && f.status!=='done';
+    return `<div class="task-row">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--brass-soft);display:flex;align-items:center;justify-content:center;color:var(--brass);flex-shrink:0;">${ICONS.followups}</div>
+      <div class="task-body">
+        <div class="task-title ${f.status==='done'?'done':''}">${escapeHtml(f.title)}</div>
+        <div class="task-meta"><span>Waiting on <b style="color:var(--text-dim)">${escapeHtml(f.waitingOn||'someone')}</b></span>
+        ${f.expectedDate? `<span class="${due?'pill pill-overdue':''}">${due?'due · ':''}${fmtDate(f.expectedDate)}</span>`:''}
+        ${f.projectId? `<span class="pill pill-proj">${escapeHtml(projectName(f.projectId))}</span>`:''}</div>
+      </div>
+      <div class="task-actions" style="opacity:1;">
+        ${f.status!=='done'? `<button class="btn btn-ghost btn-sm" onclick="markFollowedUp('${f.id}')">Mark followed up</button>`:''}
+        <button class="btn-icon" onclick="removeFollowup('${f.id}')">${ICONS.x}</button>
+      </div>
+    </div>`;}).join('')}</div>` :
+  `<div class="card card-pad empty"><div class="empty-icon">${ICONS.followups}</div><span class="serif">Nothing pending</span>Say "waiting on Ravi for the proposal" and I'll track it.</div>`}
+  `;
+}
+
+/* ---------- Reminders view ---------- */
+function renderRemindersView(){
+  const pending = STATE.reminders.filter(r=>r.status==='pending').sort((a,b)=>new Date(a.remindAt)-new Date(b.remindAt));
+  const past = STATE.reminders.filter(r=>r.status!=='pending').sort((a,b)=>new Date(b.remindAt)-new Date(a.remindAt)).slice(0,15);
+  return `
+  <div class="page-head"><div><div class="page-eyebrow">What I'll make sure you don't forget</div><div class="page-title">Reminders</div></div>
+  <button class="btn btn-ghost btn-sm" onclick="openReminderModal()">${ICONS.plus}<span>New reminder</span></button></div>
+  ${!('Notification' in window) ? '' : Notification.permission!=='granted'? `<div class="card card-pad" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;"><span style="font-size:12.5px;color:var(--text-dim);">Enable browser notifications so reminders can actually alert you.</span><button class="btn btn-brass btn-sm" onclick="requestNotifPermission()">Enable</button></div>` : ''}
+  <div class="section-label">Pending <span class="count">${pending.length}</span></div>
+  ${pending.length? `<div class="stack">${pending.map(r=>`
+    <div class="task-row">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--brass-soft);display:flex;align-items:center;justify-content:center;color:var(--brass);flex-shrink:0;">${ICONS.reminders}</div>
+      <div class="task-body"><div class="task-title">${escapeHtml(r.title)}</div><div class="task-meta"><span>${fmtDateTime(r.remindAt)}</span>${r.recurrence? `<span class="pill pill-status">${r.recurrence}</span>`:''}</div></div>
+      <div class="task-actions" style="opacity:1;">
+        <button class="btn btn-ghost btn-sm" onclick="snoozeReminder('${r.id}',1)">Snooze 1h</button>
+        <button class="btn-icon" onclick="removeReminder('${r.id}')">${ICONS.x}</button>
+      </div>
+    </div>`).join('')}</div>` : `<div class="card card-pad empty" style="padding:26px;">Nothing scheduled.</div>`}
+  ${past.length? `<div class="section-label">History</div><div class="stack">${past.map(r=>`
+    <div class="task-row"><div class="task-body"><div class="task-title done">${escapeHtml(r.title)}</div><div class="task-meta"><span>${fmtDateTime(r.remindAt)}</span><span class="pill pill-status">${r.status}</span></div></div></div>`).join('')}</div>`:''}
+  `;
+}
+
+/* ---------- Decisions view ---------- */
+function renderDecisionsView(){
+  const all = STATE.decisions.slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  return `
+  <div class="page-head"><div><div class="page-eyebrow">A record you can trust</div><div class="page-title">Decisions</div></div>
+  <button class="btn btn-ghost btn-sm" onclick="openDecisionModal()">${ICONS.plus}<span>Log a decision</span></button></div>
+  ${all.length? `<div class="stack">${all.map(d=>`
+    <div class="card card-pad">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div class="serif" style="font-size:15.5px;font-weight:500;">${escapeHtml(d.title)}</div>
+        <button class="btn-icon" onclick="removeDecision('${d.id}')">${ICONS.x}</button>
+      </div>
+      ${d.notes? `<div style="font-size:12.5px;color:var(--text-dim);margin-top:6px;line-height:1.5;">${escapeHtml(d.notes)}</div>`:''}
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:11px;color:var(--text-faint);">
+        ${d.projectId? `<span class="pill pill-proj">${escapeHtml(projectName(d.projectId))}</span>`:''}
+        <span>${new Date(d.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+      </div>
+    </div>`).join('')}</div>` :
+  `<div class="card card-pad empty"><div class="empty-icon">${ICONS.decisions}</div><span class="serif">No decisions logged</span>Say "Decision: …" and I'll keep the reasoning on record.</div>`}
+  `;
+}
+
+/* ---------- Memory view ---------- */
+function renderMemoryView(){
+  const cats = ['fact','preference','goal','relationship','pattern','commitment','belief','other'];
+  const grouped = cats.map(c=>[c, STATE.memories.filter(m=>m.category===c)]).filter(([c,list])=>list.length);
+  return `
+  <div class="page-head"><div><div class="page-eyebrow">What your assistant is allowed to remember</div><div class="page-title">Memory</div></div>
+  <button class="btn btn-ghost btn-sm" onclick="openMemoryModal()">${ICONS.plus}<span>Remember something</span></button></div>
+  ${STATE.memories.length===0? `<div class="card card-pad empty"><div class="empty-icon">${ICONS.memory}</div><span class="serif">Nothing remembered yet</span>Say "remember that…" or add it here. Not every conversation becomes permanent memory — only what you choose.</div>` :
+  grouped.map(([cat,list])=>`
+    <div class="section-label">${cat} <span class="count">${list.length}</span></div>
+    <div class="idea-grid">${list.map(m=>`
+      <div class="card memory-card">
+        <div style="font-size:13px;line-height:1.5;color:var(--text);">${escapeHtml(m.content)}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;">
+          <span class="pill pill-status">${m.confidence==='inferred'?'Inferred':'You said this'}</span>
+          <span class="pill pill-status">${m.source==='ai'?'From assistant':'You added this'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+          <span class="tiny">confirmed ${daysSince(m.lastConfirmed||m.createdAt)===0?'today':daysSince(m.lastConfirmed||m.createdAt)+'d ago'}</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="confirmMemory('${m.id}')">Still true</button>
+            <button class="btn btn-ghost btn-sm" onclick="removeMemory('${m.id}')">Forget</button>
+          </div>
+        </div>
+      </div>`).join('')}</div>
+  `).join('')}
+  `;
+}
+function confirmMemory(id){ updateEntity('memories', id, {lastConfirmed:nowISO(), lastUsed:nowISO()}, 'user'); toast('Confirmed'); render(); }
+
+/* ---------- Search view ---------- */
+function renderSearchView(){
+  return `<div class="page-head"><div><div class="page-eyebrow">Everything, in one place</div><div class="page-title">Search</div></div></div>
+  <div class="search-box">${ICONS.search}<input id="searchInput" placeholder="Search tasks, projects, ideas, decisions, memory…" oninput="doSearch(this.value)" autofocus></div>
+  <div id="searchResults"></div>`;
+}
+function doSearch(q){
+  const el = document.getElementById('searchResults');
+  if(!q || q.trim().length<1){ el.innerHTML=''; return; }
+  const query = q.toLowerCase();
+  const collections = [['tasks','TASK'],['ideas','IDEA'],['thoughts','THOUGHT'],['notes','NOTE'],['decisions','DECISION'],['followups','FOLLOWUP']];
+  let items = [];
+  collections.forEach(([col,type])=>{
+    STATE[col].forEach(i=>{
+      const hay = ((i.title||'')+' '+(i.notes||'')).toLowerCase();
+      if(hay.includes(query)) items.push(Object.assign({}, i, {__type:type}));
+    });
+  });
+  const projMatches = STATE.projects.filter(p=>(p.name||'').toLowerCase().includes(query) || (p.objective||'').toLowerCase().includes(query));
+  const memMatches = STATE.memories.filter(m=>(m.content||'').toLowerCase().includes(query));
+  if(items.length===0 && projMatches.length===0 && memMatches.length===0){ el.innerHTML=`<div class="card card-pad empty" style="padding:26px;">No matches for "${escapeHtml(q)}"</div>`; return; }
+  el.innerHTML = `
+    ${projMatches.length? `<div class="section-label">Projects</div><div class="proj-grid">${projMatches.map(p=>projectCardHtml(p)).join('')}</div>`:''}
+    ${items.length? `<div class="section-label">Items <span class="count">${items.length}</span></div><div class="stack">
+      ${items.map(i=>`<div class="task-row"><span class="pill" style="background:var(--bg-raised);color:${TYPE_META[i.__type].color};border-color:var(--border);">${TYPE_META[i.__type].label}</span>
+      <div class="task-body"><div class="task-title">${escapeHtml(i.title)}</div><div class="task-meta">${i.projectId? `<span class="pill pill-proj">${escapeHtml(projectName(i.projectId))}</span>`:''}${i.dueDate? `<span>${fmtDate(i.dueDate)}</span>`:''}</div></div></div>`).join('')}
+    </div>`:''}
+    ${memMatches.length? `<div class="section-label">Memory <span class="count">${memMatches.length}</span></div><div class="idea-grid">${memMatches.map(m=>`<div class="card memory-card"><div style="font-size:13px;">${escapeHtml(m.content)}</div></div>`).join('')}</div>`:''}
+  `;
+}
+
+/* ---------- Settings view ---------- */
+function saveTimezone(){
+  const val = document.getElementById('tzInput').value.trim();
+  try{ new Intl.DateTimeFormat(undefined, {timeZone: val}); }
+  catch(e){ toast('Not a recognized timezone — try e.g. Asia/Kolkata'); return; }
+  STATE.timezone = val; scheduleSave(); toast('Timezone saved'); render();
+}
+function renderSettingsView(){
+  return `
+  <div class="page-head"><div><div class="page-eyebrow">Your data, your rules</div><div class="page-title">Settings</div></div></div>
+  <div class="card card-pad" style="max-width:520px;margin-bottom:16px;">
+    <div class="field-label">Your name</div>
+    <div style="display:flex;gap:8px;"><input class="field-input" id="nameInput" value="${escapeHtml(STATE.userName)}" style="flex:1;">
+    <button class="btn btn-brass btn-sm" onclick="STATE.userName=document.getElementById('nameInput').value||'there'; scheduleSave(); toast('Saved'); render();">Save</button></div>
+  </div>
+  <div class="card card-pad" style="max-width:520px;margin-bottom:16px;">
+    <div class="field-label">Timezone</div>
+    <div class="tiny" style="margin-bottom:8px;">Reminders and "today" are calculated against this — not whatever timezone your browser happens to be in. Detected automatically; override only if it's wrong or you're about to travel.</div>
+    <div style="display:flex;gap:8px;"><input class="field-input" id="tzInput" value="${escapeHtml(STATE.timezone)}" placeholder="e.g. Asia/Kolkata" style="flex:1;">
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tzInput').value=Intl.DateTimeFormat().resolvedOptions().timeZone;">Detect</button>
+    <button class="btn btn-brass btn-sm" onclick="saveTimezone()">Save</button></div>
+  </div>
+  <div class="card card-pad" style="max-width:520px;margin-bottom:16px;">
+    <div class="field-label">Account</div>
+    <div class="tiny" style="margin-bottom:10px;">Signed in as ${escapeHtml((SESSION && SESSION.user && SESSION.user.email) || 'unknown')}. Your data lives in Supabase now — the same account works from the Android and Desktop apps too.</div>
+    <button class="btn btn-ghost btn-sm" onclick="signOutUser()">Sign out</button>
+  </div>
+  <div class="card card-pad" style="max-width:520px;margin-bottom:16px;">
+
+    <div class="field-label">AI actions</div>
+    <div class="tiny" style="line-height:1.8;">
+      <b style="color:var(--text-dim);">Automatic</b> — adding a task, marking one done, logging a decision, tracking a follow-up, setting a reminder, remembering something.<br>
+      <b style="color:var(--brass-bright);">Needs your confirmation</b> — moving a due date, creating a new project.<br>
+      <b style="color:var(--coral);">Always needs your confirmation</b> — deleting a task, forgetting a memory.
+    </div>
+  </div>
+  <div class="card card-pad" style="max-width:520px;margin-bottom:16px;">
+    <div class="field-label">Notifications</div>
+    <div class="tiny" style="margin-bottom:10px;">${('Notification' in window) ? 'Status: '+Notification.permission : 'Not supported in this browser.'}</div>
+    <button class="btn btn-ghost btn-sm" onclick="requestNotifPermission(); render();">Enable browser notifications</button>
+  </div>
+  <div class="card card-pad" style="max-width:520px;margin-bottom:16px;">
+    <div class="field-label">Sync to a file (e.g. your OneDrive folder)</div>
+    <div class="tiny" style="margin-bottom:10px;">LifeOS can keep a JSON file updated on your computer every time something changes. Point it at a file inside your OneDrive folder and OneDrive syncs it automatically, the same as any other file — no account sign-in needed.</div>
+    ${FILE_HANDLE? `
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="tiny">Connected · <b style="color:var(--teal)">${escapeHtml(FILE_HANDLE_NAME)}</b></span>
+        <button class="btn btn-ghost btn-sm" onclick="disconnectSyncFile()">Disconnect</button>
+      </div>` :
+    (window.showSaveFilePicker ? `
+      <button class="btn btn-brass btn-sm" onclick="connectSyncFile()">Choose a file in your OneDrive folder</button>
+      <div class="tiny" style="margin-top:8px;">You'll need to reconnect after reloading — browsers don't allow sites to keep file access permanently. If this chat's preview blocks the file picker, download this page and open it directly in Chrome or Edge — it'll work there.</div>` :
+      `<div class="tiny" style="color:var(--coral);">Live file sync needs Chrome or Edge, opened outside this chat preview. Until then, use Export below, move the file into your OneDrive folder by hand, and Import to bring it back.</div>`)}
+  </div>
+  <div class="card card-pad" style="max-width:520px;margin-bottom:16px;">
+    <div class="field-label">Your data</div>
+    <div class="tiny" style="margin-bottom:12px;">Everything you capture is stored under your account and never shared. Export it any time, import it back, or delete it completely.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="exportData()">Export everything</button>
+      <button class="btn btn-ghost btn-sm" onclick="importFromPicker()">Import from file</button>
+      <input type="file" id="importFileInput" accept="application/json" style="display:none;" onchange="handleImportFileInput(this)">
+      <button class="btn btn-ghost btn-sm" style="color:var(--coral);border-color:rgba(221,122,99,0.35);" onclick="deleteEverything()">Delete everything</button>
+    </div>
+  </div>
+  <div class="card card-pad" style="max-width:520px;">
+    <div class="field-label">Overview</div>
+    <div class="tiny" style="line-height:1.9;">${STATE.tasks.length} tasks · ${STATE.projects.length} projects · ${STATE.ideas.length} ideas · ${STATE.decisions.length} decisions · ${STATE.followups.length} follow-ups · ${STATE.memories.length} memories · ${STATE.activityLog.length} activity entries logged</div>
+  </div>
+  `;
+}
+
+/* ---------------------------- Actions ---------------------------- */
+function toggleTask(id){ const t=STATE.tasks.find(i=>i.id===id); if(!t) return; if(t.status==='completed') updateEntity('tasks',id,{status:'open',completedAt:null}); else updateEntity('tasks',id,{status:'completed',completedAt:nowISO()}); render(); }
+function completeTask(id){ updateEntity('tasks',id,{status:'completed',completedAt:nowISO()}); toast('Marked done'); render(); }
+function postponeTask(id){ const t=STATE.tasks.find(i=>i.id===id); if(!t) return; const base=t.dueDate? new Date(t.dueDate+'T00:00:00') : new Date(); base.setDate(base.getDate()+1); updateEntity('tasks',id,{dueDate:base.toISOString().slice(0,10), postponeCount:(t.postponeCount||0)+1}); render(); }
+function removeTask(id){ const t=STATE.tasks.find(x=>x.id===id); if(t && !confirm(`Delete task "${t.title}"?`)) return; deleteEntity('tasks',id); render(); }
+function removeIdea(id){ deleteEntity('ideas',id); render(); }
+function removeFollowup(id){ deleteEntity('followups',id); render(); }
+function removeReminder(id){ deleteEntity('reminders',id); render(); }
+function removeDecision(id){ deleteEntity('decisions',id); render(); }
+function removeMemory(id){ const m=STATE.memories.find(x=>x.id===id); if(m && !confirm(`Forget "${m.content}"? This can't be undone.`)) return; deleteEntity('memories',id); toast('Forgotten'); render(); }
+function removeGoal(id){ STATE.goals = STATE.goals.filter(g=>g.id!==id); scheduleSave(); render(); }
+function markFollowedUp(id){ updateEntity('followups',id,{status:'done'}); toast('Nice — logged the follow-up'); render(); }
+
+async function askWhatNow(){
+  const note = document.getElementById('whatNowNote');
+  if(note) note.innerHTML = '<span class="loader"></span> thinking it through…';
+  try{
+    const r = await aiWhatNow();
+    if(!r){ if(note) note.textContent='Nothing open to recommend.'; return; }
+    let html = `<b>${r.durationMinutes? r.durationMinutes+' min — ':''}</b>${escapeHtml(r.reasoning||'')}`;
+    if(r.challenge) html += `<br><br><b>${escapeHtml(r.challenge)}</b>`;
+    if(note) note.innerHTML = html;
+  }catch(e){ if(note) note.textContent = 'Could not reach the assistant just now — try again in a moment.'; }
+}
+async function askAssistant(question){
+  if(!question || !question.trim()) return;
+  if(PENDING_UI){ toast('Confirm or cancel the pending action first'); return; }
+  const input = document.getElementById('chatInput');
+  STATE.chat.push({role:'user', text:question.trim()});
+  if(input) input.value='';
+  render();
+  const log = document.getElementById('chatLog');
+  if(log){ log.innerHTML += `<div class="chat-msg ai"><span class="loader"></span></div>`; log.scrollTop = log.scrollHeight; }
+  try{
+    const r = await aiAskAssistant(question.trim());
+    if(r.pending){ PENDING_UI = r.pending; }
+    else { STATE.chat.push({role:'assistant', text:r.text}); scheduleSave(); }
+  }catch(e){ STATE.chat.push({role:'assistant', text:'I could not reach the assistant just now — try again in a moment.'}); }
+  render();
+  const log2 = document.getElementById('chatLog'); if(log2) log2.scrollTop = log2.scrollHeight;
+}
+function promoteIdea(id){
+  const idea = STATE.ideas.find(i=>i.id===id); if(!idea) return;
+  const p = addEntity('projects', {name:idea.title, description:idea.notes||'', objective:idea.notes||''}, 'user');
+  deleteEntity('ideas', id, 'user');
+  toast(`Promoted to project "${p.name}"`);
+  setView('projects');
+}
+async function generateDailyLine(){
+  if(STATE.lastDailyDate===todayISO() && STATE.lastDailyLine) return STATE.lastDailyLine;
+  try{ const r = await aiDailyLine(); STATE.lastDailyLine=r.line; STATE.lastDailyDate=todayISO(); scheduleSave(); return r.line; }
+  catch(e){ return null; }
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(STATE,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href=url; a.download=`lifeos-export-${todayISO()}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast('Export downloaded');
+}
+async function deleteEverything(){
+  if(!confirm('This permanently deletes everything in LifeOS — tasks, projects, ideas, decisions, memory. This cannot be undone. Continue?')) return;
+  try{
+    await Promise.all(Array.from(SYNC_COLLECTIONS).map(c =>
+      sbFetch(`/rest/v1/${c}?id=not.is.null`, { method:'DELETE' }).catch(e=>console.error('delete failed for', c, e))
+    ));
+    await sbFetch(`/rest/v1/user_settings?user_id=eq.${SESSION.user.id}`, { method:'DELETE' }).catch(()=>{});
+  }catch(e){ toast('Some data may not have been deleted — check your connection and try again'); }
+  STATE = defaultState(); STATE.backendUrl = CONFIG.backendUrl;
+  toast('Everything deleted'); render();
+}
+
+/* ---------------------------- Modals ---------------------------- */
+function openModal(html){ const wrap=document.createElement('div'); wrap.className='modal-overlay'; wrap.id='modalOverlay'; wrap.onclick=(e)=>{ if(e.target===wrap) closeModal(); }; wrap.innerHTML=html; document.body.appendChild(wrap); }
+function closeModal(){ const m=document.getElementById('modalOverlay'); if(m) m.remove(); }
+function projectOptionsHtml(selectedId){ return `<option value="">No project</option>` + STATE.projects.map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${escapeHtml(p.name)}</option>`).join(''); }
+
+function openTaskModal(){
+  openModal(`<div class="modal"><div class="modal-head"><div class="modal-title">New task</div><button class="close-x" onclick="closeModal()">${ICONS.x}</button></div>
+    <div class="modal-body">
+      <div><span class="field-label">Title</span><input class="field-input" id="mTitle" placeholder="Review the client proposal"></div>
+      <div class="field-row">
+        <div><span class="field-label">Project</span><select class="field-input" id="mProject">${projectOptionsHtml()}</select></div>
+        <div><span class="field-label">Priority</span><select class="field-input" id="mPriority"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+      </div>
+      <div><span class="field-label">Due date</span><input class="field-input" type="date" id="mDue"></div>
+      <label class="checkbox-row"><input type="checkbox" id="mCommit"> This is a commitment I've made, not just a to-do</label>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-brass btn-sm" onclick="submitTaskModal()">Create task</button></div>
+  </div>`);
+}
+function submitTaskModal(){
+  const title = document.getElementById('mTitle').value.trim(); if(!title) return;
+  addEntity('tasks', { title, projectId:document.getElementById('mProject').value||null, priority:document.getElementById('mPriority').value, dueDate:document.getElementById('mDue').value||null, commitment:document.getElementById('mCommit').checked }, 'user');
+  closeModal(); toast('Task created'); render();
+}
+function openProjectFormModal(){
+  openModal(`<div class="modal"><div class="modal-head"><div class="modal-title">New project</div><button class="close-x" onclick="closeModal()">${ICONS.x}</button></div>
+    <div class="modal-body">
+      <div><span class="field-label">Name</span><input class="field-input" id="mName" placeholder="Consulting positioning"></div>
+      <div><span class="field-label">Objective</span><textarea class="field-input" id="mObjective" placeholder="What does done look like?"></textarea></div>
+      <div><span class="field-label">Deadline (optional)</span><input class="field-input" type="date" id="mDeadline"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-brass btn-sm" onclick="submitProjectModal()">Create project</button></div>
+  </div>`);
+}
+function submitProjectModal(){
+  const name = document.getElementById('mName').value.trim(); if(!name) return;
+  addEntity('projects', { name, objective:document.getElementById('mObjective').value.trim(), deadline:document.getElementById('mDeadline').value||null }, 'user');
+  closeModal(); toast('Project created'); render();
+}
+function openGoalModal(){
+  openModal(`<div class="modal"><div class="modal-head"><div class="modal-title">New goal</div><button class="close-x" onclick="closeModal()">${ICONS.x}</button></div>
+    <div class="modal-body">
+      <div><span class="field-label">Title</span><input class="field-input" id="mGTitle" placeholder="Build a sustainable consulting income stream"></div>
+      <div><span class="field-label">Why this matters</span><textarea class="field-input" id="mGDesc"></textarea></div>
+      <div><span class="field-label">Linked project (optional)</span><select class="field-input" id="mGProject">${projectOptionsHtml()}</select></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-brass btn-sm" onclick="submitGoalModal()">Create goal</button></div>
+  </div>`);
+}
+function submitGoalModal(){
+  const title = document.getElementById('mGTitle').value.trim(); if(!title) return;
+  const pid = document.getElementById('mGProject').value;
+  addEntity('goals', { title, description:document.getElementById('mGDesc').value.trim(), projectIds: pid?[pid]:[] }, 'user');
+  closeModal(); toast('Goal created'); render();
+}
+function openDecisionModal(){
+  openModal(`<div class="modal"><div class="modal-head"><div class="modal-title">Log a decision</div><button class="close-x" onclick="closeModal()">${ICONS.x}</button></div>
+    <div class="modal-body">
+      <div><span class="field-label">Decision</span><input class="field-input" id="mDTitle" placeholder="Don't invest in Aariti Industries"></div>
+      <div><span class="field-label">Reasoning</span><textarea class="field-input" id="mDReason"></textarea></div>
+      <div><span class="field-label">Related project (optional)</span><select class="field-input" id="mDProject">${projectOptionsHtml()}</select></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-brass btn-sm" onclick="submitDecisionModal()">Log decision</button></div>
+  </div>`);
+}
+function submitDecisionModal(){
+  const title = document.getElementById('mDTitle').value.trim(); if(!title) return;
+  addEntity('decisions', { title, notes:document.getElementById('mDReason').value.trim()||null, projectId:document.getElementById('mDProject').value||null }, 'user');
+  closeModal(); toast('Decision logged'); render();
+}
+function openReminderModal(){
+  const now = new Date(Date.now()+3600000);
+  const dateVal = now.toISOString().slice(0,10); const timeVal = now.toTimeString().slice(0,5);
+  openModal(`<div class="modal"><div class="modal-head"><div class="modal-title">New reminder</div><button class="close-x" onclick="closeModal()">${ICONS.x}</button></div>
+    <div class="modal-body">
+      <div><span class="field-label">Remind me to…</span><input class="field-input" id="mRTitle" placeholder="Call the bank"></div>
+      <div class="field-row">
+        <div><span class="field-label">Date</span><input class="field-input" type="date" id="mRDate" value="${dateVal}"></div>
+        <div><span class="field-label">Time</span><input class="field-input" type="time" id="mRTime" value="${timeVal}"></div>
+      </div>
+      <div><span class="field-label">Repeat</span><select class="field-input" id="mRRepeat"><option value="">Never</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-brass btn-sm" onclick="submitReminderModal()">Set reminder</button></div>
+  </div>`);
+}
+function submitReminderModal(){
+  const title = document.getElementById('mRTitle').value.trim(); if(!title) return;
+  const date = document.getElementById('mRDate').value, time = document.getElementById('mRTime').value;
+  addEntity('reminders', { title, remindAt:zonedToUtcISO(date, time, currentTz()), recurrence: document.getElementById('mRRepeat').value||null }, 'user');
+  requestNotifPermission();
+  closeModal(); toast('Reminder set'); render();
+}
+function openMemoryModal(){
+  openModal(`<div class="modal"><div class="modal-head"><div class="modal-title">Remember something</div><button class="close-x" onclick="closeModal()">${ICONS.x}</button></div>
+    <div class="modal-body">
+      <div><span class="field-label">What should I remember?</span><textarea class="field-input" id="mMContent" placeholder="Ravi prefers WhatsApp over email"></textarea></div>
+      <div><span class="field-label">Category</span><select class="field-input" id="mMCategory">
+        <option value="fact">Fact</option><option value="preference">Preference</option><option value="goal">Goal</option><option value="relationship">Relationship</option><option value="pattern">Pattern</option><option value="commitment">Commitment</option><option value="belief">Belief</option><option value="other" selected>Other</option>
+      </select></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button><button class="btn btn-brass btn-sm" onclick="submitMemoryModal()">Remember</button></div>
+  </div>`);
+}
+function submitMemoryModal(){
+  const content = document.getElementById('mMContent').value.trim(); if(!content) return;
+  addEntity('memories', { content, category:document.getElementById('mMCategory').value, confidence:'stated', source:'user', lastUsed:nowISO(), lastConfirmed:nowISO() }, 'user');
+  closeModal(); toast('Remembered'); render();
+}
+
+function openProjectModal(id){
+  const p = projectById(id); if(!p) return;
+  const ts = STATE.tasks.filter(t=>t.projectId===id); const open = ts.filter(t=>t.status!=='completed');
+  const projIdeas = STATE.ideas.filter(i=>i.projectId===id); const projDecisions = STATE.decisions.filter(d=>d.projectId===id);
+  const ms = projectMilestones(p); const progress = projectProgress(p); const health = HEALTH_META[projectHealthKey(p)]; const pulse = projectPulse(p);
+  const recentActivity = STATE.activityLog.filter(a=>a.entityId===id || [].concat(ts,projIdeas,projDecisions,ms).some(e=>e.id===a.entityId)).slice(-10).reverse();
+  openModal(`<div class="modal" style="max-width:660px;">
+    <div class="modal-head"><div><div class="modal-title">${escapeHtml(p.name)}</div></div><button class="close-x" onclick="closeModal()">${ICONS.x}</button></div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--text-dim);line-height:1.5;">${escapeHtml(p.objective||'No objective set.')}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select class="field-input" style="width:auto;" onchange="updateEntity('projects','${p.id}',{status:this.value}); render();">
+          ${['active','on hold','blocked','completed','abandoned','not started'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <span class="pill ${health.cls}" title="${escapeHtml(health.desc)}">${health.label}</span>
+        ${progress!==null? `<span class="mono" style="font-size:12px;color:var(--text-faint);">${progress}% complete</span>`:''}
+      </div>
+      <div class="tiny" style="color:var(--text-faint);">Pulse: ${escapeHtml(pulse)}</div>
+      <div id="projAssessment" class="margin-note"><button class="btn btn-ghost btn-sm" onclick="runProjectAssessment('${p.id}')">${ICONS.sparkle}<span>Get AI assessment</span></button></div>
+
+      <div class="section-label" style="margin:6px 0 4px;">Milestones <span class="count">${ms.length}</span></div>
+      <div class="stack">
+        ${ms.map(m=>`<div class="task-row"><button class="checkbox ${m.status==='done'?'checked':''}" onclick="toggleMilestone('${m.id}')">${m.status==='done'?ICONS.check:''}</button>
+          <div class="task-body"><div class="task-title ${m.status==='done'?'done':''}">${escapeHtml(m.title)}</div>${m.dueDate? `<div class="task-meta"><span>${fmtDate(m.dueDate)}</span></div>`:''}</div>
+          <div class="task-actions" style="opacity:1;"><button class="btn-icon" onclick="removeMilestone('${m.id}')">${ICONS.x}</button></div></div>`).join('')}
+        <div style="display:flex;gap:6px;">
+          <input class="field-input" id="newMilestoneTitle" placeholder="Add a milestone…" style="flex:1;">
+          <button class="btn btn-ghost btn-sm" onclick="addMilestoneFromModal('${p.id}')">${ICONS.plus}</button>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin:6px 0 4px;">Open tasks <span class="count">${open.length}</span></div>
+      <div class="stack">${open.length? open.map(t=>taskRowHtml(t)).join('') : `<div style="font-size:12.5px;color:var(--text-faint);">None yet.</div>`}</div>
+      ${projIdeas.length? `<div class="section-label" style="margin:6px 0 4px;">Ideas</div><div style="font-size:13px;color:var(--text-dim);">${projIdeas.map(i=>escapeHtml(i.title)).join(' · ')}</div>`:''}
+      ${projDecisions.length? `<div class="section-label" style="margin:6px 0 4px;">Decisions</div><div style="font-size:13px;color:var(--text-dim);">${projDecisions.map(d=>escapeHtml(d.title)).join(' · ')}</div>`:''}
+      ${recentActivity.length? `<div class="section-label" style="margin:6px 0 4px;">Activity</div><div>${recentActivity.map(a=>`<div class="activity-line"><span class="mono">${new Date(a.ts).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span><span>${a.entityType} ${a.action} ${a.source==='ai'?'· by assistant':''}</span></div>`).join('')}</div>`:''}
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost btn-sm" style="color:var(--coral);" onclick="deleteProject('${p.id}')">Delete project</button><button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button></div>
+  </div>`);
+}
+async function runProjectAssessment(id){
+  const p = projectById(id); if(!p) return;
+  const el = document.getElementById('projAssessment'); if(el) el.innerHTML = '<span class="loader"></span> assessing…';
+  try{ const r = await aiProjectAssessment(p); if(el) el.innerHTML = escapeHtml(r.assessment||''); }
+  catch(e){ if(el) el.innerHTML = 'Could not generate an assessment right now.'; }
+}
+function deleteProject(id){
+  if(!confirm('Delete this project? Tasks, ideas and milestones linked to it will be unassigned, not deleted.')) return;
+  deleteEntity('projects', id, 'user');
+  [STATE.tasks, STATE.ideas, STATE.thoughts, STATE.notes, STATE.decisions, STATE.followups, STATE.milestones].forEach(arr=>arr.forEach(e=>{ if(e.projectId===id) e.projectId=null; }));
+  scheduleSave(); closeModal(); render();
+}
+function addMilestoneFromModal(projectId){
+  const input = document.getElementById('newMilestoneTitle'); const title = input.value.trim(); if(!title) return;
+  addEntity('milestones', { title, projectId }, 'user');
+  openProjectModal(projectId);
+}
+function toggleMilestone(id){ const m = STATE.milestones.find(x=>x.id===id); if(!m) return; updateEntity('milestones', id, {status: m.status==='done'?'open':'done'}); const modal=document.getElementById('modalOverlay'); if(modal && m.projectId) openProjectModal(m.projectId); render(); }
+function removeMilestone(id){ const m = STATE.milestones.find(x=>x.id===id); deleteEntity('milestones', id); if(m && m.projectId) openProjectModal(m.projectId); render(); }
+
+/* ---------------------------- Setup + Auth (gate everything else) ---------------------------- */
+function renderSetupScreen(){
+  document.getElementById('app').innerHTML = `
+  <div style="max-width:480px;margin:60px auto;padding:24px;">
+    <div class="serif" style="font-size:22px;margin-bottom:6px;">Set up LifeOS</div>
+    <div class="tiny" style="margin-bottom:16px;">One-time setup for this browser — the same three values you used in the Android/Desktop app's local.properties.</div>
+    <div style="margin-bottom:10px;"><span class="field-label">Supabase URL</span><input class="field-input" id="setupUrl" placeholder="https://your-project-ref.supabase.co"></div>
+    <div style="margin-bottom:10px;"><span class="field-label">Supabase anon key</span><input class="field-input" id="setupKey" placeholder="eyJ..."></div>
+    <div style="margin-bottom:16px;"><span class="field-label">Backend URL (Edge Function)</span><input class="field-input" id="setupBackend" placeholder="https://your-project-ref.supabase.co/functions/v1/claude-proxy"></div>
+    <button class="btn btn-brass" onclick="submitSetup()">Continue</button>
+  </div>`;
+}
+function submitSetup(){
+  const url = document.getElementById('setupUrl').value.trim();
+  const key = document.getElementById('setupKey').value.trim();
+  const backend = document.getElementById('setupBackend').value.trim();
+  if(!url || !key || !backend){ toast('Fill in all three fields'); return; }
+  saveConfigLocal({ supabaseUrl:url, anonKey:key, backendUrl:backend });
+  boot();
+}
+function renderAuthScreen(isSignUp){
+  document.getElementById('app').innerHTML = `
+  <div style="max-width:400px;margin:80px auto;padding:24px;">
+    <div class="serif" style="font-size:22px;margin-bottom:16px;">${isSignUp?'Create your LifeOS account':'Sign in to LifeOS'}</div>
+    <div style="margin-bottom:10px;"><input class="field-input" id="authEmail" placeholder="Email"></div>
+    <div style="margin-bottom:16px;"><input class="field-input" type="password" id="authPassword" placeholder="Password"></div>
+    <div id="authError" class="tiny" style="color:var(--coral);margin-bottom:10px;"></div>
+    <button class="btn btn-brass" onclick="submitAuth(${isSignUp})">${isSignUp?'Sign up':'Sign in'}</button>
+    <button class="btn btn-ghost" style="margin-left:8px;" onclick="renderAuthScreen(${!isSignUp})">${isSignUp?'Already have an account? Sign in':'New here? Create an account'}</button>
+  </div>`;
+}
+async function submitAuth(isSignUp){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  try{
+    if(isSignUp) await signUp(email, password); else await signIn(email, password);
+    await startApp();
+  }catch(e){ errEl.textContent = 'Could not sign in — check your email and password.'; }
+}
+
+/* ---------------------------- Boot ---------------------------- */
+async function boot(){
+  CONFIG = loadConfig();
+  if(!CONFIG || !CONFIG.supabaseUrl || !CONFIG.anonKey || !CONFIG.backendUrl){
+    renderSetupScreen();
+    return;
+  }
+  document.getElementById('app').innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;width:100%;color:var(--text-faint);gap:10px;"><span class="loader"></span> Checking your session…</div>`;
+  const restored = await trySignInWithStoredSession();
+  if(!restored){
+    renderAuthScreen(false);
+    return;
+  }
+  await startApp();
+}
+async function startApp(){
+  document.getElementById('app').innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;width:100%;color:var(--text-faint);gap:10px;"><span class="loader"></span> Loading LifeOS…</div>`;
+  await loadState();
+  render();
+  checkReminders();
+  REMINDER_TIMER = setInterval(checkReminders, 30000);
+  generateDailyLine().then(line=>{
+    const el = document.getElementById('briefingCard');
+    if(el && line) el.innerHTML = `<span class="briefing-kicker">AI Briefing</span><span class="briefing-line serif">${escapeHtml(line)}</span>`;
+  }).catch(()=>{});
+}
+boot();
+</script>
+</body>
+</html>
